@@ -558,6 +558,17 @@ function initApp() {
   const savedName = localStorage.getItem("user_name");
   const savedRoll = localStorage.getItem("user_roll");
   const savedToken = localStorage.getItem("user_id_token");
+  const hasSubmitted = localStorage.getItem("has_submitted");
+  
+  if (hasSubmitted === "true" && savedEmail && savedName && savedRoll) {
+    submitterEmail = savedEmail;
+    submitterName = savedName;
+    submitterRoll = savedRoll;
+    document.getElementById("login-container").style.display = "none";
+    document.getElementById("app-container").style.display = "block";
+    showSuccess(savedName, savedRoll);
+    return;
+  }
   
   if (GOOGLE_CLIENT_ID) {
     document.getElementById("google-signin-section").style.display = "block";
@@ -710,6 +721,7 @@ function logout() {
   localStorage.removeItem("user_name");
   localStorage.removeItem("user_roll");
   localStorage.removeItem("user_id_token");
+  localStorage.removeItem("has_submitted");
   
   submitterEmail = "";
   submitterName = "";
@@ -775,6 +787,7 @@ async function submitPredictions() {
 }
 
 function showSuccess(name, roll) {
+  localStorage.setItem("has_submitted", "true");
   document.getElementById("main").innerHTML = `
     <div class="success">
       <div class="success-ring">

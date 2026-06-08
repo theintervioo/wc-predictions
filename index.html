@@ -843,7 +843,7 @@ function logout() {
   document.getElementById("app-container").style.display = "none";
 }
 
-async function submitPredictions() {
+function submitPredictions() {
   const name = submitterName.trim();
   const roll = submitterRoll.trim();
   const email = submitterEmail.trim();
@@ -859,29 +859,72 @@ async function submitPredictions() {
   btn.textContent = "Submitting...";
   btn.disabled = true;
   
-  const row = {
-    timestamp: new Date().toISOString(),
-    id_token: idToken,
-    email: email.toLowerCase(),
-    name,
-    roll,
-    ...Object.fromEntries(GROUPS.map(g => [g.name, picks[g.name].join(" | ")])),
-    wildcards: wildcardPicks.join(" | "),
-    total_picks: Object.values(picks).flat().length + wildcardPicks.length,
-  };
+  const callbackName = "jsonp_submit_" + Math.round(100000 * Math.random());
   
-  try {
-    await fetch(SHEET_URL, {
-      method: "POST", 
-      mode: "no-cors",
-      body: JSON.stringify(row)
-    });
-    showSuccess(name, roll);
-  } catch(e) {
-    errEl.textContent = "Something went wrong. Please try again.";
+  const timeoutId = setTimeout(() => {
+    console.error("Submission timed out.");
+    cleanup();
+    errEl.textContent = "Submission timed out. Please check your internet connection and try again.";
     btn.textContent = "Submit predictions 🚀";
     btn.disabled = false;
+  }, 15000); // 15-second timeout for writing
+
+  function cleanup() {
+    delete window[callbackName];
+    const scriptEl = document.getElementById(callbackName);
+    if (scriptEl) scriptEl.remove();
   }
+
+  window[callbackName] = function(result) {
+    clearTimeout(timeoutId);
+    cleanup();
+    
+    if (result.status === "success") {
+      // Save locally ONLY after successful verification by the backend
+      localStorage.setItem("has_submitted", "true");
+      localStorage.setItem("user_email", email);
+      localStorage.setItem("user_name", name);
+      localStorage.setItem("user_roll", roll);
+      localStorage.setItem("user_id_token", idToken);
+      localStorage.setItem("user_picks", JSON.stringify(picks));
+      localStorage.setItem("user_wildcards", JSON.stringify(wildcardPicks));
+      
+      showSuccess(name, roll);
+    } else {
+      errEl.textContent = result.error || "Submission failed. Please try again.";
+      btn.textContent = "Submit predictions 🚀";
+      btn.disabled = false;
+    }
+  };
+
+  const params = new URLSearchParams();
+  params.append("action", "submit");
+  params.append("email", email.toLowerCase());
+  params.append("id_token", idToken);
+  params.append("name", name);
+  params.append("roll", roll);
+  params.append("wildcards", wildcardPicks.join(" | "));
+  params.append("total_picks", Object.values(picks).flat().length + wildcardPicks.length);
+  params.append("callback", callbackName);
+  
+  GROUPS.forEach(g => {
+    params.append(g.name, picks[g.name].join(" | "));
+  });
+
+  const script = document.createElement("script");
+  script.id = callbackName;
+  script.src = `${SHEET_URL}?${params.toString()}`;
+  
+  script.onerror = function() {
+    console.error("JSONP submission failed to load.");
+    clearTimeout(timeoutId);
+    cleanup();
+    errEl.textContent = "Network error. Unable to contact server. Please try again.";
+    btn.textContent = "Submit predictions 🚀";
+    btn.disabled = false;
+  };
+
+  document.body.appendChild(script);
 }
 
 function renderReadOnlySummary() {

@@ -738,29 +738,28 @@ function handleCredentialResponse(response) {
     token: jwt
   };
   
-  // Check if we already have roll number cached
-  const savedRoll = localStorage.getItem("user_roll");
-  if (savedRoll) {
-    submitterEmail = email;
-    submitterName = name;
-    submitterRoll = savedRoll;
-    idToken = jwt;
-    
-    localStorage.setItem("user_email", email);
-    localStorage.setItem("user_name", name);
-    localStorage.setItem("user_id_token", jwt);
-    
-    document.getElementById("login-container").style.display = "none";
-    document.getElementById("app-container").style.display = "block";
-    checkSubmissionStatus(email, jwt, () => {
+  checkSubmissionStatus(email, jwt, () => {
+    const savedRoll = localStorage.getItem("user_roll");
+    if (savedRoll) {
+      submitterEmail = email;
+      submitterName = name;
+      submitterRoll = savedRoll;
+      idToken = jwt;
+      
+      localStorage.setItem("user_email", email);
+      localStorage.setItem("user_name", name);
+      localStorage.setItem("user_id_token", jwt);
+      
+      document.getElementById("login-container").style.display = "none";
+      document.getElementById("app-container").style.display = "block";
+      updateUserBar();
       renderStep();
-    });
-  } else {
-    // Show roll number form
-    document.getElementById("google-signin-section").style.display = "none";
-    document.getElementById("roll-form").style.display = "block";
-    document.getElementById("login-subtitle").textContent = `Welcome ${name}! Enter your Roll Number to continue.`;
-  }
+    } else {
+      document.getElementById("google-signin-section").style.display = "none";
+      document.getElementById("roll-form").style.display = "block";
+      document.getElementById("login-subtitle").textContent = `Welcome ${name}! Enter your Roll Number to continue.`;
+    }
+  });
 }
 
 function completeGoogleLogin(e) {
@@ -791,9 +790,8 @@ function completeGoogleLogin(e) {
   
   document.getElementById("login-container").style.display = "none";
   document.getElementById("app-container").style.display = "block";
-  checkSubmissionStatus(submitterEmail, idToken, () => {
-    renderStep();
-  });
+  updateUserBar();
+  renderStep();
 }
 
 function handleManualLogin(e) {
@@ -813,19 +811,20 @@ function handleManualLogin(e) {
     return;
   }
   
-  submitterEmail = email;
-  submitterName = name;
-  submitterRoll = roll;
-  idToken = "DEV_MODE_NO_TOKEN";
-  
   localStorage.setItem("user_email", email);
   localStorage.setItem("user_name", name);
   localStorage.setItem("user_roll", roll);
-  localStorage.setItem("user_id_token", idToken);
+  localStorage.setItem("user_id_token", "DEV_MODE_NO_TOKEN");
   
-  document.getElementById("login-container").style.display = "none";
-  document.getElementById("app-container").style.display = "block";
-  checkSubmissionStatus(email, idToken, () => {
+  checkSubmissionStatus(email, "DEV_MODE_NO_TOKEN", () => {
+    submitterEmail = email;
+    submitterName = name;
+    submitterRoll = roll;
+    idToken = "DEV_MODE_NO_TOKEN";
+    
+    document.getElementById("login-container").style.display = "none";
+    document.getElementById("app-container").style.display = "block";
+    updateUserBar();
     renderStep();
   });
 }

@@ -564,6 +564,12 @@ function initApp() {
     submitterEmail = savedEmail;
     submitterName = savedName;
     submitterRoll = savedRoll;
+    
+    const savedPicks = localStorage.getItem("user_picks");
+    const savedWildcards = localStorage.getItem("user_wildcards");
+    if (savedPicks) picks = JSON.parse(savedPicks);
+    if (savedWildcards) wildcardPicks = JSON.parse(savedWildcards);
+    
     document.getElementById("login-container").style.display = "none";
     document.getElementById("app-container").style.display = "block";
     showSuccess(savedName, savedRoll);
@@ -722,6 +728,8 @@ function logout() {
   localStorage.removeItem("user_roll");
   localStorage.removeItem("user_id_token");
   localStorage.removeItem("has_submitted");
+  localStorage.removeItem("user_picks");
+  localStorage.removeItem("user_wildcards");
   
   submitterEmail = "";
   submitterName = "";
@@ -786,8 +794,37 @@ async function submitPredictions() {
   }
 }
 
+function renderReadOnlySummary() {
+  return `
+    <div class="summary-card" style="text-align: left; max-width: 580px; margin: 1.5rem auto 1rem;">
+      <div class="summary-title" style="margin-bottom: 8px;">👤 Submitter Profile</div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <span class="pill">👤 ${submitterName}</span>
+        <span class="pill">🎫 ${submitterRoll}</span>
+        <span class="pill">📧 ${submitterEmail}</span>
+      </div>
+    </div>
+    <div class="summary-card" style="text-align: left; max-width: 580px; margin: 0 auto 1rem;">
+      <div class="summary-title">✅ Group qualifiers (24 teams)</div>
+      ${GROUPS.map(g=>`
+        <div class="summary-group">
+          <span class="sg-name">${g.name}</span>
+          ${picks[g.name] ? picks[g.name].map(t=>`<span class="tag">${t}</span>`).join("") : ""}
+        </div>`).join("")}
+    </div>
+    <div class="summary-card" style="text-align: left; max-width: 580px; margin: 0 auto 1.5rem;">
+      <div class="summary-title">⚡ Wildcard picks (8 teams)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        ${wildcardPicks.map(t=>`<span class="tag wc">${t}</span>`).join("")}
+      </div>
+    </div>`;
+}
+
 function showSuccess(name, roll) {
   localStorage.setItem("has_submitted", "true");
+  localStorage.setItem("user_picks", JSON.stringify(picks));
+  localStorage.setItem("user_wildcards", JSON.stringify(wildcardPicks));
+  
   document.getElementById("main").innerHTML = `
     <div class="success">
       <div class="success-ring">
@@ -795,16 +832,13 @@ function showSuccess(name, roll) {
           <polyline points="20 6 9 17 4 12"/>
         </svg>
       </div>
-      <h2>You're in!</h2>
-      <p>Predictions locked in. May the best picks win.</p>
-      <div class="pill-row">
-        <span class="pill">👤 ${name}</span>
-        <span class="pill">🎫 ${roll}</span>
-        <span class="pill">📧 ${submitterEmail}</span>
-        <span class="pill">⚽ 32 teams picked</span>
-      </div>
+      <h2>Submission Locked In!</h2>
+      <p style="margin-bottom: 1.5rem;">You have successfully submitted your predictions. Here are your choices:</p>
+      
+      ${renderReadOnlySummary()}
+      
       <p style="margin-top:1rem;font-size:13px;color:rgba(240,244,248,0.35);">Results will be tracked as the group stage plays out.</p>
-      <button class="btn" style="margin-top: 1.5rem;" onclick="logout()">Logout</button>
+      <button class="btn" style="margin-top: 1.5rem;" onclick="logout()">Logout / Switch User</button>
     </div>`;
   document.getElementById("progress-bar").style.width = "100%";
   document.getElementById("step-pct").textContent = "100%";

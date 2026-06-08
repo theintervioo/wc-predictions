@@ -33,6 +33,7 @@ body{font-family:'Barlow',sans-serif;background:var(--dark);color:var(--text);mi
 .badge{display:inline-flex;align-items:center;gap:6px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--green);border:1px solid rgba(0,201,122,0.35);padding:5px 14px;border-radius:99px;margin-bottom:1.25rem;}
 .badge-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+@keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
 .hero h1{font-family:'Barlow Condensed',sans-serif;font-size:clamp(2.5rem,10vw,5rem);font-weight:800;line-height:0.95;letter-spacing:-0.01em;margin-bottom:1rem;text-transform:uppercase;}
 .hero h1 .line2{color:var(--green);display:block;}
 .hero-sub{font-size:14px;color:var(--muted);margin-bottom:1.5rem;}
@@ -575,28 +576,83 @@ function updateUserBar() {
   }
 }
 
+async function checkSubmissionStatus(email, token, callback) {
+  const url = `${SHEET_URL}?action=checkStatus&email=${encodeURIComponent(email)}&id_token=${encodeURIComponent(token)}`;
+  
+  const main = document.getElementById("main");
+  const originalHTML = main.innerHTML;
+  main.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem;text-align:center;color:var(--text);">
+      <div style="border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid var(--green); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 1.5rem;"></div>
+      <h3 style="margin-bottom:0.5rem;">Verifying your account...</h3>
+      <p style="color:var(--muted);font-size:14px;">Checking for existing submissions.</p>
+    </div>
+  `;
+  
+  try {
+    const response = await fetch(url);
+    const result = await response.json();
+    
+    if (result.status === "success") {
+      if (result.has_submitted) {
+        localStorage.setItem("has_submitted", "true");
+        localStorage.setItem("user_email", email);
+        localStorage.setItem("user_name", result.name);
+        localStorage.setItem("user_roll", result.roll);
+        localStorage.setItem("user_id_token", token);
+        localStorage.setItem("user_picks", JSON.stringify(result.picks));
+        localStorage.setItem("user_wildcards", JSON.stringify(result.wildcards));
+        
+        submitterEmail = email;
+        submitterName = result.name;
+        submitterRoll = result.roll;
+        idToken = token;
+        picks = result.picks;
+        wildcardPicks = result.wildcards;
+        
+        document.getElementById("login-container").style.display = "none";
+        document.getElementById("app-container").style.display = "block";
+        updateUserBar();
+        showSuccess(result.name, result.roll);
+      } else {
+        main.innerHTML = originalHTML;
+        callback();
+      }
+    } else {
+      alert("Session expired or authentication failed: " + result.error);
+      logout();
+    }
+  } catch(e) {
+    console.error("Status check failed:", e);
+    const hasSubmitted = localStorage.getItem("has_submitted");
+    const savedPicks = localStorage.getItem("user_picks");
+    const savedWildcards = localStorage.getItem("user_wildcards");
+    
+    submitterEmail = email;
+    submitterName = localStorage.getItem("user_name") || "";
+    submitterRoll = localStorage.getItem("user_roll") || "";
+    idToken = token;
+    
+    if (hasSubmitted === "true") {
+      if (savedPicks) picks = JSON.parse(savedPicks);
+      if (savedWildcards) wildcardPicks = JSON.parse(savedWildcards);
+      
+      document.getElementById("login-container").style.display = "none";
+      document.getElementById("app-container").style.display = "block";
+      updateUserBar();
+      showSuccess(submitterName, submitterRoll);
+    } else {
+      main.innerHTML = originalHTML;
+      callback();
+    }
+  }
+}
+
 function initApp() {
   const savedEmail = localStorage.getItem("user_email");
   const savedName = localStorage.getItem("user_name");
   const savedRoll = localStorage.getItem("user_roll");
   const savedToken = localStorage.getItem("user_id_token");
-  const hasSubmitted = localStorage.getItem("has_submitted");
-  
-  if (hasSubmitted === "true" && savedEmail && savedName && savedRoll) {
-    submitterEmail = savedEmail;
-    submitterName = savedName;
-    submitterRoll = savedRoll;
-    
-    const savedPicks = localStorage.getItem("user_picks");
-    const savedWildcards = localStorage.getItem("user_wildcards");
-    if (savedPicks) picks = JSON.parse(savedPicks);
-    if (savedWildcards) wildcardPicks = JSON.parse(savedWildcards);
-    
-    document.getElementById("login-container").style.display = "none";
-    document.getElementById("app-container").style.display = "block";
-    showSuccess(savedName, savedRoll);
-    return;
-  }
   
   if (GOOGLE_CLIENT_ID) {
     document.getElementById("google-signin-section").style.display = "block";
@@ -609,14 +665,11 @@ function initApp() {
   
   // Try to restore session
   if (savedEmail && savedEmail.toLowerCase().endsWith("@iimidr.ac.in") && savedToken) {
-    submitterEmail = savedEmail;
-    submitterName = savedName || "";
-    submitterRoll = savedRoll || "";
-    idToken = savedToken;
-    updateUserBar();
     document.getElementById("login-container").style.display = "none";
     document.getElementById("app-container").style.display = "block";
-    renderStep();
+    checkSubmissionStatus(savedEmail, savedToken, () => {
+      renderStep();
+    });
   } else {
     document.getElementById("login-container").style.display = "flex";
     document.getElementById("app-container").style.display = "none";
@@ -671,10 +724,11 @@ function handleCredentialResponse(response) {
     localStorage.setItem("user_name", name);
     localStorage.setItem("user_id_token", jwt);
     
-    updateUserBar();
     document.getElementById("login-container").style.display = "none";
     document.getElementById("app-container").style.display = "block";
-    renderStep();
+    checkSubmissionStatus(email, jwt, () => {
+      renderStep();
+    });
   } else {
     // Show roll number form
     document.getElementById("google-signin-section").style.display = "none";
@@ -709,10 +763,11 @@ function completeGoogleLogin(e) {
   localStorage.setItem("user_roll", roll);
   localStorage.setItem("user_id_token", idToken);
   
-  updateUserBar();
   document.getElementById("login-container").style.display = "none";
   document.getElementById("app-container").style.display = "block";
-  renderStep();
+  checkSubmissionStatus(submitterEmail, idToken, () => {
+    renderStep();
+  });
 }
 
 function handleManualLogin(e) {
@@ -742,10 +797,11 @@ function handleManualLogin(e) {
   localStorage.setItem("user_roll", roll);
   localStorage.setItem("user_id_token", idToken);
   
-  updateUserBar();
   document.getElementById("login-container").style.display = "none";
   document.getElementById("app-container").style.display = "block";
-  renderStep();
+  checkSubmissionStatus(email, idToken, () => {
+    renderStep();
+  });
 }
 
 function logout() {

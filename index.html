@@ -576,9 +576,7 @@ function updateUserBar() {
   }
 }
 
-async function checkSubmissionStatus(email, token, callback) {
-  const url = `${SHEET_URL}?action=checkStatus&email=${encodeURIComponent(email)}&id_token=${encodeURIComponent(token)}`;
-  
+function checkSubmissionStatus(email, token, callback) {
   const main = document.getElementById("main");
   const originalHTML = main.innerHTML;
   main.innerHTML = `
@@ -588,11 +586,49 @@ async function checkSubmissionStatus(email, token, callback) {
       <p style="color:var(--muted);font-size:14px;">Checking for existing submissions.</p>
     </div>
   `;
+
+  const callbackName = "jsonp_callback_" + Math.round(100000 * Math.random());
   
-  try {
-    const response = await fetch(url);
-    const result = await response.json();
+  const timeoutId = setTimeout(() => {
+    console.warn("Status check timed out. Falling back to local cache.");
+    cleanup();
+    fallback();
+  }, 6000);
+
+  function cleanup() {
+    delete window[callbackName];
+    const scriptEl = document.getElementById(callbackName);
+    if (scriptEl) scriptEl.remove();
+  }
+
+  function fallback() {
+    const hasSubmitted = localStorage.getItem("has_submitted");
+    const savedPicks = localStorage.getItem("user_picks");
+    const savedWildcards = localStorage.getItem("user_wildcards");
     
+    submitterEmail = email;
+    submitterName = localStorage.getItem("user_name") || "";
+    submitterRoll = localStorage.getItem("user_roll") || "";
+    idToken = token;
+    
+    if (hasSubmitted === "true") {
+      if (savedPicks) picks = JSON.parse(savedPicks);
+      if (savedWildcards) wildcardPicks = JSON.parse(savedWildcards);
+      
+      document.getElementById("login-container").style.display = "none";
+      document.getElementById("app-container").style.display = "block";
+      updateUserBar();
+      showSuccess(submitterName, submitterRoll);
+    } else {
+      main.innerHTML = originalHTML;
+      callback();
+    }
+  }
+
+  window[callbackName] = function(result) {
+    clearTimeout(timeoutId);
+    cleanup();
+
     if (result.status === "success") {
       if (result.has_submitted) {
         localStorage.setItem("has_submitted", "true");
@@ -622,30 +658,20 @@ async function checkSubmissionStatus(email, token, callback) {
       alert("Session expired or authentication failed: " + result.error);
       logout();
     }
-  } catch(e) {
-    console.error("Status check failed:", e);
-    const hasSubmitted = localStorage.getItem("has_submitted");
-    const savedPicks = localStorage.getItem("user_picks");
-    const savedWildcards = localStorage.getItem("user_wildcards");
-    
-    submitterEmail = email;
-    submitterName = localStorage.getItem("user_name") || "";
-    submitterRoll = localStorage.getItem("user_roll") || "";
-    idToken = token;
-    
-    if (hasSubmitted === "true") {
-      if (savedPicks) picks = JSON.parse(savedPicks);
-      if (savedWildcards) wildcardPicks = JSON.parse(savedWildcards);
-      
-      document.getElementById("login-container").style.display = "none";
-      document.getElementById("app-container").style.display = "block";
-      updateUserBar();
-      showSuccess(submitterName, submitterRoll);
-    } else {
-      main.innerHTML = originalHTML;
-      callback();
-    }
-  }
+  };
+
+  const script = document.createElement("script");
+  script.id = callbackName;
+  script.src = `${SHEET_URL}?action=checkStatus&email=${encodeURIComponent(email)}&id_token=${encodeURIComponent(token)}&callback=${callbackName}`;
+  
+  script.onerror = function() {
+    console.error("JSONP script failed to load.");
+    clearTimeout(timeoutId);
+    cleanup();
+    fallback();
+  };
+
+  document.body.appendChild(script);
 }
 
 function initApp() {
@@ -818,6 +844,12 @@ function logout() {
   submitterRoll = "";
   idToken = "";
   tempGoogleProfile = null;
+  
+  // Clear selections in memory
+  picks = {};
+  GROUPS.forEach(g => picks[g.name] = []);
+  wildcardPicks = [];
+  currentStep = 0;
   
   // Reset UI elements
   document.getElementById("login-subtitle").textContent = "Sign in with your campus Google account to continue";

@@ -714,7 +714,14 @@ function handleCredentialResponse(response) {
     token: jwt
   };
   
+  const loginSubtitle = document.getElementById("login-subtitle");
+  const originalSubtitle = loginSubtitle.textContent;
+  loginSubtitle.textContent = "Verifying submission status, please wait...";
+  
+  document.getElementById("google-signin-section").style.display = "none";
+  
   checkSubmissionStatus(email, jwt, () => {
+    loginSubtitle.textContent = originalSubtitle;
     const savedRoll = localStorage.getItem("user_roll");
     if (savedRoll) {
       submitterEmail = email;

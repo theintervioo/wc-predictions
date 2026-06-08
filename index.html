@@ -110,19 +110,6 @@ body{font-family:'Barlow',sans-serif;background: linear-gradient(rgba(8,14,18,0.
 .pill-row{display:flex;gap:10px;justify-content:center;margin:14px 0;flex-wrap:wrap;}
 .pill{font-size:13px;padding:6px 16px;border-radius:99px;background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);display:flex;align-items:center;gap:6px;}
 
-/* ── IDEAS PANEL ── */
-.ideas-section{background:var(--dark2);border-top:1px solid var(--border);padding:2rem 1rem;}
-.ideas-inner{max-width:660px;margin:0 auto;}
-.ideas-title{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;}
-.ideas-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.idea-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;}
-.idea-icon{font-size:20px;margin-bottom:6px;}
-.idea-name{font-size:13px;font-weight:600;margin-bottom:4px;}
-.idea-desc{font-size:12px;color:var(--muted);line-height:1.5;}
-.idea-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:2px 8px;border-radius:99px;margin-top:6px;}
-.idea-tag.soon{background:rgba(0,201,122,0.12);color:var(--green);}
-.idea-tag.later{background:rgba(255,255,255,0.06);color:var(--muted);}
-
 /* ── LOGIN SCREEN ── */
 .login-screen {
   display: flex;
@@ -306,38 +293,6 @@ body{font-family:'Barlow',sans-serif;background: linear-gradient(rgba(8,14,18,0.
   <!-- MAIN -->
   <div class="main" id="main"></div>
 
-  <!-- IDEAS PANEL -->
-  <div class="ideas-section" id="ideas-section" style="display:none;">
-    <div class="ideas-inner">
-      <div class="ideas-title">💡 Coming soon to the series</div>
-      <div class="ideas-grid">
-        <div class="idea-card">
-          <div class="idea-icon">🏆</div>
-          <div class="idea-name">Live Leaderboard</div>
-          <div class="idea-desc">See who's leading in real time as group stage results come in.</div>
-          <span class="idea-tag soon">High priority</span>
-        </div>
-        <div class="idea-card">
-          <div class="idea-icon">📊</div>
-          <div class="idea-name">Top Picks</div>
-          <div class="idea-desc">Which teams did most people pick? See the crowd's consensus.</div>
-          <span class="idea-tag soon">High priority</span>
-        </div>
-        <div class="idea-card">
-          <div class="idea-icon">😮</div>
-          <div class="idea-name">Upset Tracker</div>
-          <div class="idea-desc">Who dared to pick the underdogs? Bonus drama when they're right.</div>
-          <span class="idea-tag later">Later</span>
-        </div>
-        <div class="idea-card">
-          <div class="idea-icon">🔥</div>
-          <div class="idea-name">Hot Takes Wall</div>
-          <div class="idea-desc">Highlight the most controversial picks — ranked by how unpopular they are.</div>
-          <span class="idea-tag later">Later</span>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -962,7 +917,6 @@ function showSuccess(name, roll) {
   document.getElementById("progress-bar").style.width = "100%";
   document.getElementById("step-pct").textContent = "100%";
   document.getElementById("step-label").textContent = "Done!";
-  document.getElementById("ideas-section").style.display = "block";
   window.scrollTo({top:0,behavior:"smooth"});
 }
 

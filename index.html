@@ -761,30 +761,14 @@ async function submitPredictions() {
   };
   
   try {
-    const response = await fetch(SHEET_URL, {
+    await fetch(SHEET_URL, {
       method: "POST", 
+      mode: "no-cors",
       body: JSON.stringify(row)
     });
-    
-    // Check if the response was successful (Apps Script returns error in JSON if server fails validation)
-    const resText = await response.text();
-    let resJson;
-    try {
-       resJson = JSON.parse(resText);
-    } catch(err) {
-       // Opaque responses (no-cors) won't parse, but if we don't use no-cors we can verify response!
-    }
-    
-    if (resJson && resJson.status === "error") {
-      errEl.textContent = "Error: " + resJson.error;
-      btn.textContent = "Submit predictions 🚀";
-      btn.disabled = false;
-    } else {
-      showSuccess(name, roll);
-    }
+    showSuccess(name, roll);
   } catch(e) {
-    // If CORS or net error, fallback to visual success but warning
-    errEl.textContent = "Submit request sent. Please verify if it wrote to the Google Sheet.";
+    errEl.textContent = "Something went wrong. Please try again.";
     btn.textContent = "Submit predictions 🚀";
     btn.disabled = false;
   }

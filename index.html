@@ -268,6 +268,15 @@ body{font-family:'Barlow',sans-serif;background:var(--dark);color:var(--text);mi
 </div>
 
 <div id="app-container" style="display: none;">
+  <!-- USER BAR -->
+  <div id="user-bar" style="background: var(--dark2); border-bottom: 1px solid var(--border); padding: 10px 1.5rem; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted); position: relative; z-index: 15;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--green);"></span>
+      Logged in: <strong style="color: var(--text);" id="user-bar-info"></strong>
+    </div>
+    <button class="btn" style="padding: 4px 12px; font-size: 11px; height: auto; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(255,255,255,0.04);" onclick="logout()">Logout</button>
+  </div>
+
   <!-- HERO -->
   <div class="hero">
     <div class="hero-bg"></div>
@@ -553,6 +562,19 @@ function tryAdvance() {
 }
 
 /* ── AUTHENTICATION & INITIALIZATION ── */
+function updateUserBar() {
+  const bar = document.getElementById("user-bar");
+  const info = document.getElementById("user-bar-info");
+  if (bar && info) {
+    if (submitterName && submitterRoll) {
+      info.textContent = `${submitterName} (${submitterRoll})`;
+      bar.style.display = "flex";
+    } else {
+      bar.style.display = "none";
+    }
+  }
+}
+
 function initApp() {
   const savedEmail = localStorage.getItem("user_email");
   const savedName = localStorage.getItem("user_name");
@@ -591,6 +613,7 @@ function initApp() {
     submitterName = savedName || "";
     submitterRoll = savedRoll || "";
     idToken = savedToken;
+    updateUserBar();
     document.getElementById("login-container").style.display = "none";
     document.getElementById("app-container").style.display = "block";
     renderStep();
@@ -648,6 +671,7 @@ function handleCredentialResponse(response) {
     localStorage.setItem("user_name", name);
     localStorage.setItem("user_id_token", jwt);
     
+    updateUserBar();
     document.getElementById("login-container").style.display = "none";
     document.getElementById("app-container").style.display = "block";
     renderStep();
@@ -685,6 +709,7 @@ function completeGoogleLogin(e) {
   localStorage.setItem("user_roll", roll);
   localStorage.setItem("user_id_token", idToken);
   
+  updateUserBar();
   document.getElementById("login-container").style.display = "none";
   document.getElementById("app-container").style.display = "block";
   renderStep();
@@ -717,6 +742,7 @@ function handleManualLogin(e) {
   localStorage.setItem("user_roll", roll);
   localStorage.setItem("user_id_token", idToken);
   
+  updateUserBar();
   document.getElementById("login-container").style.display = "none";
   document.getElementById("app-container").style.display = "block";
   renderStep();
@@ -749,6 +775,7 @@ function logout() {
     initGoogleSignIn();
   }
   
+  updateUserBar();
   document.getElementById("login-container").style.display = "flex";
   document.getElementById("app-container").style.display = "none";
 }
@@ -824,6 +851,9 @@ function showSuccess(name, roll) {
   localStorage.setItem("has_submitted", "true");
   localStorage.setItem("user_picks", JSON.stringify(picks));
   localStorage.setItem("user_wildcards", JSON.stringify(wildcardPicks));
+  
+  const bar = document.getElementById("user-bar");
+  if (bar) bar.style.display = "none";
   
   document.getElementById("main").innerHTML = `
     <div class="success">

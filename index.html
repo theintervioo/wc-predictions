@@ -533,24 +533,31 @@ function updateUserBar() {
   }
 }
 
-function checkSubmissionStatus(email, token, callback) {
+function checkSubmissionStatus(email, token, callback, attempt = 1) {
   const main = document.getElementById("main");
-  const originalHTML = main.innerHTML;
-  main.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem;text-align:center;color:var(--text);">
-      <div style="border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid var(--green); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 1.5rem;"></div>
-      <h3 style="margin-bottom:0.5rem;">Verifying your account...</h3>
-      <p style="color:var(--muted);font-size:14px;">Checking for existing submissions.</p>
-    </div>
-  `;
+  
+  if (attempt === 1) {
+    const originalHTML = main.innerHTML;
+    main.dataset.originalHtml = originalHTML;
+    
+    main.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem;text-align:center;color:var(--text);">
+        <div style="border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid var(--green); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 1.5rem;"></div>
+        <h3 style="margin-bottom:0.5rem;">Verifying your account...</h3>
+        <p style="color:var(--muted);font-size:14px;">Checking for existing submissions.</p>
+      </div>
+    `;
+  } else {
+    console.log(`Retrying account verification... Attempt ${attempt}`);
+  }
 
   const callbackName = "jsonp_callback_" + Math.round(100000 * Math.random());
   
   const timeoutId = setTimeout(() => {
-    console.warn("Status check timed out.");
+    console.warn("Status check timed out. Retrying...");
     cleanup();
-    showConnectionError(email, token, callback);
-  }, 12000); // 12-second timeout to accommodate cold starts
+    handleFailure();
+  }, 10000); // 10-second timeout per attempt
 
   function cleanup() {
     delete window[callbackName];
@@ -558,9 +565,21 @@ function checkSubmissionStatus(email, token, callback) {
     if (scriptEl) scriptEl.remove();
   }
 
+  function handleFailure() {
+    if (attempt < 5) {
+      setTimeout(() => {
+        checkSubmissionStatus(email, token, callback, attempt + 1);
+      }, attempt * 1000);
+    } else {
+      console.error("Verification failed after 5 attempts.");
+      main.innerHTML = main.dataset.originalHtml || "";
+      logout();
+    }
+  }
+
   // Fast restore if we already verified submission locally in this session
   const hasSubmitted = localStorage.getItem("has_submitted");
-  if (hasSubmitted === "true") {
+  if (hasSubmitted === "true" && attempt === 1) {
     clearTimeout(timeoutId);
     cleanup();
     const savedPicks = localStorage.getItem("user_picks");
@@ -607,11 +626,12 @@ function checkSubmissionStatus(email, token, callback) {
         updateUserBar();
         showSuccess(result.name, result.roll);
       } else {
-        main.innerHTML = originalHTML;
+        main.innerHTML = main.dataset.originalHtml || "";
         callback();
       }
     } else {
-      alert("Session expired or authentication failed: " + result.error);
+      console.error("Verification result status failed:", result.error);
+      main.innerHTML = main.dataset.originalHtml || "";
       logout();
     }
   };
@@ -621,33 +641,13 @@ function checkSubmissionStatus(email, token, callback) {
   script.src = `${SHEET_URL}?action=checkStatus&email=${encodeURIComponent(email)}&id_token=${encodeURIComponent(token)}&callback=${callbackName}`;
   
   script.onerror = function() {
-    console.error("JSONP script failed to load.");
+    console.error("JSONP script failed to load. Retrying...");
     clearTimeout(timeoutId);
     cleanup();
-    showConnectionError(email, token, callback);
+    handleFailure();
   };
 
   document.body.appendChild(script);
-}
-
-function showConnectionError(email, token, callback) {
-  const main = document.getElementById("main");
-  document.getElementById("login-container").style.display = "none";
-  document.getElementById("app-container").style.display = "block";
-  main.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem;text-align:center;color:var(--text);">
-      <div style="font-size: 48px; margin-bottom: 1.5rem; filter: drop-shadow(0 0 10px rgba(245,200,66,0.3));">⚠️</div>
-      <h3 style="margin-bottom:0.75rem; font-family:'Barlow Condensed', sans-serif; font-size: 1.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Connection Issues</h3>
-      <p style="color:var(--muted);font-size:14px;max-width:320px;margin-bottom:2rem;line-height:1.5;">We could not verify your submission status due to a slow connection or database timeout.</p>
-      <div style="display:flex; flex-direction:column; gap:10px; width:100%; max-width:280px; margin:0 auto;">
-        <button class="btn btn-green" id="retry-btn" style="width:100%; font-weight:700;">Retry Connection</button>
-        <button class="btn" style="width:100%; background:rgba(255,255,255,0.04);" onclick="logout()">Logout</button>
-      </div>
-    </div>
-  `;
-  document.getElementById("retry-btn").onclick = function() {
-    checkSubmissionStatus(email, token, callback);
-  };
 }
 
 function initApp() {

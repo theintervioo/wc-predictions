@@ -551,39 +551,9 @@ function checkSubmissionStatus(email, token, callback, attempt = 1) {
     console.log(`Retrying account verification... Attempt ${attempt}`);
   }
 
-  const callbackName = "jsonp_callback_" + Math.round(100000 * Math.random());
-  
-  const timeoutId = setTimeout(() => {
-    console.warn("Status check timed out. Retrying...");
-    cleanup();
-    handleFailure();
-  }, 15000); // 15-second timeout per attempt to accommodate cold starts
-
-  function cleanup() {
-    delete window[callbackName];
-    const scriptEl = document.getElementById(callbackName);
-    if (scriptEl) scriptEl.remove();
-  }
-
-  function handleFailure() {
-    if (attempt < 5) {
-      setTimeout(() => {
-        checkSubmissionStatus(email, token, callback, attempt + 1);
-      }, attempt * 1000);
-    } else {
-      console.error("Verification failed after 5 attempts.");
-      main.innerHTML = main.dataset.originalHtml || "";
-      const errEl = document.getElementById("login-error-msg");
-      if (errEl) errEl.textContent = "Database connection timed out. Please check your internet connection and try again.";
-      logout(true);
-    }
-  }
-
   // Fast restore if we already verified submission locally in this session
   const hasSubmitted = localStorage.getItem("has_submitted");
   if (hasSubmitted === "true" && attempt === 1) {
-    clearTimeout(timeoutId);
-    cleanup();
     const savedPicks = localStorage.getItem("user_picks");
     const savedWildcards = localStorage.getItem("user_wildcards");
     
@@ -602,56 +572,65 @@ function checkSubmissionStatus(email, token, callback, attempt = 1) {
     return;
   }
 
-  window[callbackName] = function(result) {
-    clearTimeout(timeoutId);
-    cleanup();
-
-    if (result.status === "success") {
-      if (result.has_submitted) {
-        localStorage.setItem("has_submitted", "true");
-        localStorage.setItem("user_email", email);
-        localStorage.setItem("user_name", result.name);
-        localStorage.setItem("user_roll", result.roll);
-        localStorage.setItem("user_id_token", token);
-        localStorage.setItem("user_picks", JSON.stringify(result.picks));
-        localStorage.setItem("user_wildcards", JSON.stringify(result.wildcards));
-        
-        submitterEmail = email;
-        submitterName = result.name;
-        submitterRoll = result.roll;
-        idToken = token;
-        picks = result.picks;
-        wildcardPicks = result.wildcards;
-        
-        document.getElementById("login-container").style.display = "none";
-        document.getElementById("app-container").style.display = "block";
-        updateUserBar();
-        showSuccess(result.name, result.roll);
-      } else {
-        main.innerHTML = main.dataset.originalHtml || "";
-        callback();
-      }
-    } else {
-      console.error("Verification result status failed:", result.error);
-      main.innerHTML = main.dataset.originalHtml || "";
-      const errEl = document.getElementById("login-error-msg");
-      if (errEl) errEl.textContent = "Verification failed: " + result.error;
-      logout(true);
-    }
-  };
-
-  const script = document.createElement("script");
-  script.id = callbackName;
-  script.src = `${SHEET_URL}?action=checkStatus&email=${encodeURIComponent(email)}&id_token=${encodeURIComponent(token)}&callback=${callbackName}`;
+  const url = `${SHEET_URL}?action=checkStatus&email=${encodeURIComponent(email)}&id_token=${encodeURIComponent(token)}`;
   
-  script.onerror = function() {
-    console.error("JSONP script failed to load. Retrying...");
-    clearTimeout(timeoutId);
-    cleanup();
-    handleFailure();
-  };
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, 15000); // 15-second timeout per attempt to accommodate cold starts
 
-  document.body.appendChild(script);
+  fetch(url, { signal: controller.signal, redirect: "follow" })
+    .then(res => res.json())
+    .then(result => {
+      clearTimeout(timeoutId);
+      if (result.status === "success") {
+        if (result.has_submitted) {
+          localStorage.setItem("has_submitted", "true");
+          localStorage.setItem("user_email", email);
+          localStorage.setItem("user_name", result.name);
+          localStorage.setItem("user_roll", result.roll);
+          localStorage.setItem("user_id_token", token);
+          localStorage.setItem("user_picks", JSON.stringify(result.picks));
+          localStorage.setItem("user_wildcards", JSON.stringify(result.wildcards));
+          
+          submitterEmail = email;
+          submitterName = result.name;
+          submitterRoll = result.roll;
+          idToken = token;
+          picks = result.picks;
+          wildcardPicks = result.wildcards;
+          
+          document.getElementById("login-container").style.display = "none";
+          document.getElementById("app-container").style.display = "block";
+          updateUserBar();
+          showSuccess(result.name, result.roll);
+        } else {
+          main.innerHTML = main.dataset.originalHtml || "";
+          callback();
+        }
+      } else {
+        console.error("Verification result status failed:", result.error);
+        main.innerHTML = main.dataset.originalHtml || "";
+        const errEl = document.getElementById("login-error-msg");
+        if (errEl) errEl.textContent = "Verification failed: " + result.error;
+        logout(true);
+      }
+    })
+    .catch(err => {
+      clearTimeout(timeoutId);
+      console.warn("Status check failed or timed out. Retrying...", err);
+      if (attempt < 5) {
+        setTimeout(() => {
+          checkSubmissionStatus(email, token, callback, attempt + 1);
+        }, attempt * 1000);
+      } else {
+        console.error("Verification failed after 5 attempts.");
+        main.innerHTML = main.dataset.originalHtml || "";
+        const errEl = document.getElementById("login-error-msg");
+        if (errEl) errEl.textContent = "Database connection timed out. Please check your internet connection and try again.";
+        logout(true);
+      }
+    });
 }
 
 function initApp() {
@@ -871,44 +850,6 @@ function submitPredictions() {
   const btn = document.getElementById("submit-btn");
   btn.textContent = "Submitting...";
   btn.disabled = true;
-  
-  const callbackName = "jsonp_submit_" + Math.round(100000 * Math.random());
-  
-  const timeoutId = setTimeout(() => {
-    console.error("Submission timed out.");
-    cleanup();
-    errEl.textContent = "Submission timed out. Please check your internet connection and try again.";
-    btn.textContent = "Submit predictions 🚀";
-    btn.disabled = false;
-  }, 15000); // 15-second timeout for writing
-
-  function cleanup() {
-    delete window[callbackName];
-    const scriptEl = document.getElementById(callbackName);
-    if (scriptEl) scriptEl.remove();
-  }
-
-  window[callbackName] = function(result) {
-    clearTimeout(timeoutId);
-    cleanup();
-    
-    if (result.status === "success") {
-      // Save locally ONLY after successful verification by the backend
-      localStorage.setItem("has_submitted", "true");
-      localStorage.setItem("user_email", email);
-      localStorage.setItem("user_name", name);
-      localStorage.setItem("user_roll", roll);
-      localStorage.setItem("user_id_token", idToken);
-      localStorage.setItem("user_picks", JSON.stringify(picks));
-      localStorage.setItem("user_wildcards", JSON.stringify(wildcardPicks));
-      
-      showSuccess(name, roll);
-    } else {
-      errEl.textContent = result.error || "Submission failed. Please try again.";
-      btn.textContent = "Submit predictions 🚀";
-      btn.disabled = false;
-    }
-  };
 
   const params = new URLSearchParams();
   params.append("action", "submit");
@@ -918,26 +859,46 @@ function submitPredictions() {
   params.append("roll", roll);
   params.append("wildcards", wildcardPicks.join(" | "));
   params.append("total_picks", Object.values(picks).flat().length + wildcardPicks.length);
-  params.append("callback", callbackName);
   
   GROUPS.forEach(g => {
     params.append(g.name, picks[g.name].join(" | "));
   });
 
-  const script = document.createElement("script");
-  script.id = callbackName;
-  script.src = `${SHEET_URL}?${params.toString()}`;
+  const url = `${SHEET_URL}?${params.toString()}`;
   
-  script.onerror = function() {
-    console.error("JSONP submission failed to load.");
-    clearTimeout(timeoutId);
-    cleanup();
-    errEl.textContent = "Network error. Unable to contact server. Please try again.";
-    btn.textContent = "Submit predictions 🚀";
-    btn.disabled = false;
-  };
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, 15000); // 15-second timeout for writing
 
-  document.body.appendChild(script);
+  fetch(url, { signal: controller.signal, redirect: "follow" })
+    .then(res => res.json())
+    .then(result => {
+      clearTimeout(timeoutId);
+      if (result.status === "success") {
+        // Save locally ONLY after successful verification by the backend
+        localStorage.setItem("has_submitted", "true");
+        localStorage.setItem("user_email", email);
+        localStorage.setItem("user_name", name);
+        localStorage.setItem("user_roll", roll);
+        localStorage.setItem("user_id_token", idToken);
+        localStorage.setItem("user_picks", JSON.stringify(picks));
+        localStorage.setItem("user_wildcards", JSON.stringify(wildcardPicks));
+        
+        showSuccess(name, roll);
+      } else {
+        errEl.textContent = result.error || "Submission failed. Please try again.";
+        btn.textContent = "Submit predictions 🚀";
+        btn.disabled = false;
+      }
+    })
+    .catch(err => {
+      clearTimeout(timeoutId);
+      console.error("Submission failed:", err);
+      errEl.textContent = "Submission timed out or failed. Please check your internet connection and try again.";
+      btn.textContent = "Submit predictions 🚀";
+      btn.disabled = false;
+    });
 }
 
 function renderReadOnlySummary() {

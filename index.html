@@ -557,7 +557,7 @@ function checkSubmissionStatus(email, token, callback, attempt = 1) {
     console.warn("Status check timed out. Retrying...");
     cleanup();
     handleFailure();
-  }, 10000); // 10-second timeout per attempt
+  }, 15000); // 15-second timeout per attempt to accommodate cold starts
 
   function cleanup() {
     delete window[callbackName];
@@ -573,7 +573,9 @@ function checkSubmissionStatus(email, token, callback, attempt = 1) {
     } else {
       console.error("Verification failed after 5 attempts.");
       main.innerHTML = main.dataset.originalHtml || "";
-      logout();
+      const errEl = document.getElementById("login-error-msg");
+      if (errEl) errEl.textContent = "Database connection timed out. Please check your internet connection and try again.";
+      logout(true);
     }
   }
 
@@ -632,7 +634,9 @@ function checkSubmissionStatus(email, token, callback, attempt = 1) {
     } else {
       console.error("Verification result status failed:", result.error);
       main.innerHTML = main.dataset.originalHtml || "";
-      logout();
+      const errEl = document.getElementById("login-error-msg");
+      if (errEl) errEl.textContent = "Verification failed: " + result.error;
+      logout(true);
     }
   };
 
@@ -812,7 +816,7 @@ function handleManualLogin(e) {
   });
 }
 
-function logout() {
+function logout(keepErrorMsg = false) {
   localStorage.removeItem("user_email");
   localStorage.removeItem("user_name");
   localStorage.removeItem("user_roll");
@@ -837,7 +841,9 @@ function logout() {
   document.getElementById("login-subtitle").textContent = "Sign in with your campus Google account to continue";
   document.getElementById("login-roll").value = "";
   document.getElementById("roll-error-msg").textContent = "";
-  document.getElementById("login-error-msg").textContent = "";
+  if (!keepErrorMsg) {
+    document.getElementById("login-error-msg").textContent = "";
+  }
   
   if (GOOGLE_CLIENT_ID) {
     document.getElementById("google-signin-section").style.display = "block";

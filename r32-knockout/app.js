@@ -454,7 +454,10 @@ function showSuccess(name, roll) {
       '<p style="margin-bottom:1.5rem;">Your Round of 32 picks have been submitted successfully.</p>' +
       renderReadOnlySummary() +
       '<p style="margin-top:1rem;font-size:13px;color:rgba(240,244,248,0.35);">Results will be tracked as the knockout stage plays out.</p>' +
-      '<button class="btn" style="margin-top:1.5rem;" onclick="logout()">Logout / Switch User</button>' +
+      '<div style="margin-top:2rem;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;">' +
+        '<button class="btn" onclick="logout()">Logout / Switch User</button>' +
+        '<a href="../index.html?history=true" class="btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;">View Group Stage Picks 📋</a>' +
+      '</div>' +
     '</div>';
   document.getElementById("progress-bar").style.width = "100%";
   document.getElementById("step-pct").textContent = "100%";

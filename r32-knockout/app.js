@@ -185,7 +185,11 @@ function updateUserBar() {
   var info = document.getElementById("user-bar-info");
   if (bar && info) {
     if (submitterName && submitterRoll) {
-      info.textContent = submitterName + " (" + submitterRoll + ")";
+      var groupLink = "";
+      if (localStorage.getItem("has_group_history") === "true") {
+        groupLink = ' | <a href="../index.html?history=true" style="color:var(--green);text-decoration:none;font-weight:600;margin-left:4px;" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">Group Stage Picks 📋</a>';
+      }
+      info.innerHTML = submitterName + " (" + submitterRoll + ")" + groupLink;
       bar.style.display = "flex";
     } else {
       bar.style.display = "none";
@@ -235,6 +239,7 @@ function checkSubmissionStatus(email, token, callback, attempt) {
           localStorage.setItem("user_roll", result.roll);
           localStorage.setItem("user_id_token", token);
           localStorage.setItem("user_match_picks", JSON.stringify(result.picks));
+          localStorage.setItem("has_group_history", result.has_group_history ? "true" : "false");
           submitterEmail = email;
           submitterName = result.name;
           submitterRoll = result.roll;
@@ -245,6 +250,7 @@ function checkSubmissionStatus(email, token, callback, attempt) {
           updateUserBar();
           showSuccess(result.name, result.roll);
         } else {
+          localStorage.setItem("has_group_history", result.has_group_history ? "true" : "false");
           main.innerHTML = main.dataset.originalHtml || "";
           callback();
         }
@@ -407,6 +413,7 @@ function submitPredictions() {
         localStorage.setItem("user_email", email); localStorage.setItem("user_name", name);
         localStorage.setItem("user_roll", roll); localStorage.setItem("user_id_token", idToken);
         localStorage.setItem("user_match_picks", JSON.stringify(matchPicks));
+        localStorage.setItem("has_group_history", result.has_group_history ? "true" : "false");
         showSuccess(name, roll);
       } else {
         errEl.textContent = result.error || "Submission failed. Please try again.";
@@ -447,6 +454,10 @@ function showSuccess(name, roll) {
   localStorage.setItem("user_match_picks", JSON.stringify(matchPicks));
   var bar = document.getElementById("user-bar");
   if (bar) bar.style.display = "none";
+  var historyBtn = "";
+  if (localStorage.getItem("has_group_history") === "true") {
+    historyBtn = '<a href="../index.html?history=true" class="btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;">View Group Stage Picks 📋</a>';
+  }
   document.getElementById("main").innerHTML =
     '<div class="success">' +
       '<div class="success-ring"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>' +
@@ -456,7 +467,7 @@ function showSuccess(name, roll) {
       '<p style="margin-top:1rem;font-size:13px;color:rgba(240,244,248,0.35);">Results will be tracked as the knockout stage plays out.</p>' +
       '<div style="margin-top:2rem;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;">' +
         '<button class="btn" onclick="logout()">Logout / Switch User</button>' +
-        '<a href="../index.html?history=true" class="btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;">View Group Stage Picks 📋</a>' +
+        historyBtn +
       '</div>' +
     '</div>';
   document.getElementById("progress-bar").style.width = "100%";

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WC 2026 — Round of 32 Knockout Predictions</title>
+<meta name="description" content="Predict the winners of the FIFA World Cup 2026 Round of 32 knockout matches. Pick your winners and compete with your campus!">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-container" class="login-screen">
+  <div class="login-bg"></div>
+  <div class="login-card">
+    <div class="badge"><span class="badge-dot"></span>Sportscomm × FIFA 2026</div>
+    <h2>Round of 32 <span>Knockout</span></h2>
+    <p id="login-subtitle">Sign in with your campus Google account to continue</p>
+
+    <!-- Google Sign-in -->
+    <div id="google-signin-section" style="display: none;">
+      <div id="google-signin-btn" class="google-signin-btn-container"></div>
+      <div id="login-error-msg" class="login-error"></div>
+    </div>
+
+    <!-- Roll Number Form -->
+    <form class="login-form" id="roll-form" style="display: none;" onsubmit="completeGoogleLogin(event)">
+      <div class="login-field">
+        <label for="login-roll">Roll Number</label>
+        <input type="text" id="login-roll" placeholder="e.g. 22B1234" required>
+      </div>
+      <div class="login-error" id="roll-error-msg"></div>
+      <button type="submit" class="btn btn-green" style="width:100%;font-size:15px;padding:12px;font-weight:700;">Start Predictions 🚀</button>
+    </form>
+
+    <!-- Manual Login (Dev) -->
+    <form class="login-form" id="manual-login-form" style="display: none;" onsubmit="handleManualLogin(event)">
+      <div style="background:rgba(245,200,66,0.1);border:1px solid rgba(245,200,66,0.25);padding:10px;border-radius:6px;color:var(--gold);font-size:11px;line-height:1.4;margin-bottom:15px;">
+        ⚠️ <strong>Developer Mode:</strong> Google Sign-In is not configured.
+      </div>
+      <div class="login-field"><label for="manual-name">Full Name</label><input type="text" id="manual-name" placeholder="Priya Sharma" required></div>
+      <div class="login-field"><label for="manual-roll">Roll Number</label><input type="text" id="manual-roll" placeholder="22B1234" required></div>
+      <div class="login-field"><label for="manual-email">Email Address</label><input type="email" id="manual-email" placeholder="username@iimidr.ac.in" required></div>
+      <div class="login-error" id="manual-error-msg"></div>
+      <button type="submit" class="btn btn-green" style="width:100%;font-size:15px;padding:12px;font-weight:700;">Enter Portal 🚀</button>
+    </form>
+  </div>
+</div>
+
+<div id="app-container" style="display: none;">
+  <!-- USER BAR -->
+  <div id="user-bar" style="background:var(--dark2);border-bottom:1px solid var(--border);padding:10px 1.5rem;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted);position:relative;z-index:15;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);"></span>
+      Logged in: <strong style="color:var(--text);" id="user-bar-info"></strong>
+    </div>
+    <button class="btn" style="padding:4px 12px;font-size:11px;height:auto;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;background:rgba(255,255,255,0.04);" onclick="logout()">Logout</button>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="badge"><span class="badge-dot"></span>Sportscomm × FIFA 2026</div>
+    <h1>Round of 32<span class="line2">Knockout</span></h1>
+    <p class="hero-sub">Pick the winner from each of the 16 knockout matches. 1 point per correct call.</p>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-num">32</div><div class="stat-label">Teams</div></div>
+      <div class="stat"><div class="stat-num">16</div><div class="stat-label">Matches</div></div>
+      <div class="stat"><div class="stat-num">16</div><div class="stat-label">Picks to make</div></div>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-section">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-bar" style="width:0%"></div></div>
+    <div class="step-meta">
+      <span class="step-label" id="step-label">Getting started</span>
+      <span class="step-pct" id="step-pct">0%</span>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main" id="main"></div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

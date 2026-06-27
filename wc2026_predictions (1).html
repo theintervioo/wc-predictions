@@ -610,8 +610,20 @@ function checkSubmissionStatus(email, token, callback, attempt = 1) {
           updateUserBar();
           showSuccess(result.name, result.roll);
         } else {
-          main.innerHTML = main.dataset.originalHtml || "";
-          callback();
+          main.innerHTML = `
+            <div class="success" style="border-color: rgba(255, 95, 95, 0.25);">
+              <div class="success-ring" style="border-color: var(--red); box-shadow: 0 0 40px rgba(255, 95, 95, 0.2);"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="stroke: var(--red);"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+              <h2>No History Found</h2>
+              <p style="margin-bottom: 1.5rem;">No Group Stage prediction history was found for this account.</p>
+              <div style="display:flex; justify-content:center; gap:12px;">
+                <a href="./r32-knockout/" class="btn btn-green" style="text-decoration:none;">Go to Round of 32 Predictor 🚀</a>
+                <button class="btn" onclick="logout()">Logout</button>
+              </div>
+            </div>
+          `;
+          document.getElementById("login-container").style.display = "none";
+          document.getElementById("app-container").style.display = "block";
+          updateUserBar();
         }
       } else {
         console.error("Verification result status failed:", result.error);

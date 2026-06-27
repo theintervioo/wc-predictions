@@ -66,11 +66,11 @@ function renderMatchPage(pageIndex) {
         '<span class="match-done-badge">✓ Picked</span>' +
       '</div>' +
       '<div class="matchup-row">' +
-        '<button class="team-pick ' + (picked === m.team1 ? 'selected' : '') + (picked && picked !== m.team1 ? ' dimmed' : '') + '" onclick="pickWinner(' + m.id + ',\'' + m.team1.replace(/'/g, "\\'") + '\')">' +
+        '<button class="team-pick ' + (picked === m.team1 ? 'selected' : '') + (picked && picked !== m.team1 ? ' dimmed' : '') + (m.team1 === "TBD" ? ' tbd-team' : '') + '" onclick="pickWinner(' + m.id + ',\'' + m.team1.replace(/'/g, "\\'") + '\')">' +
           '<span class="pick-indicator">' + checkSVG() + '</span>' + m.team1 +
         '</button>' +
         '<div class="vs-divider">VS</div>' +
-        '<button class="team-pick ' + (picked === m.team2 ? 'selected' : '') + (picked && picked !== m.team2 ? ' dimmed' : '') + '" onclick="pickWinner(' + m.id + ',\'' + m.team2.replace(/'/g, "\\'") + '\')">' +
+        '<button class="team-pick ' + (picked === m.team2 ? 'selected' : '') + (picked && picked !== m.team2 ? ' dimmed' : '') + (m.team2 === "TBD" ? ' tbd-team' : '') + '" onclick="pickWinner(' + m.id + ',\'' + m.team2.replace(/'/g, "\\'") + '\')">' +
           m.team2 + '<span class="pick-indicator">' + checkSVG() + '</span>' +
         '</button>' +
       '</div>' +
@@ -150,8 +150,8 @@ function pickWinner(matchId, team) {
     else card.classList.remove("complete");
     var btns = card.querySelectorAll(".team-pick");
     btns.forEach(function(b) {
-      b.className = "team-pick";
       var btnTeam = b.textContent.trim();
+      b.className = "team-pick" + (btnTeam === "TBD" ? " tbd-team" : "");
       if (picked === btnTeam) b.classList.add("selected");
       else if (picked) b.classList.add("dimmed");
     });

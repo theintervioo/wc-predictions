@@ -2,24 +2,24 @@
 const SHEET_URL = "https://script.google.com/macros/s/AKfycby2Azv-WsEcXaBNWJrKoSBjCxyOD3qxLrZctYgesJYkEqp_kNds9oGi5t71RYX5grqS4Q/exec";
 const GOOGLE_CLIENT_ID = "585826882277-hfqgamt2avhi8jllec79t6qcnvsblq35.apps.googleusercontent.com";
 
-// ── MATCH DATA (Edit team names here when matchups are confirmed) ──
+// ── MATCH DATA ──
 const MATCHES = [
-  { id: 1, team1: "TBD", team2: "TBD" },
-  { id: 2, team1: "TBD", team2: "TBD" },
-  { id: 3, team1: "TBD", team2: "TBD" },
-  { id: 4, team1: "TBD", team2: "TBD" },
-  { id: 5, team1: "TBD", team2: "TBD" },
-  { id: 6, team1: "TBD", team2: "TBD" },
-  { id: 7, team1: "TBD", team2: "TBD" },
-  { id: 8, team1: "TBD", team2: "TBD" },
-  { id: 9, team1: "TBD", team2: "TBD" },
-  { id: 10, team1: "TBD", team2: "TBD" },
-  { id: 11, team1: "TBD", team2: "TBD" },
-  { id: 12, team1: "TBD", team2: "TBD" },
-  { id: 13, team1: "TBD", team2: "TBD" },
-  { id: 14, team1: "TBD", team2: "TBD" },
-  { id: 15, team1: "TBD", team2: "TBD" },
-  { id: 16, team1: "TBD", team2: "TBD" },
+  { id: 73, team1: "South Africa", team2: "Canada" },
+  { id: 74, team1: "Germany", team2: "Paraguay" },
+  { id: 75, team1: "Netherlands", team2: "Morocco" },
+  { id: 76, team1: "Brazil", team2: "Japan" },
+  { id: 77, team1: "France", team2: "Sweden" },
+  { id: 78, team1: "Côte d'Ivoire", team2: "Norway" },
+  { id: 79, team1: "Mexico", team2: "TBD" },
+  { id: 80, team1: "TBD", team2: "TBD" },
+  { id: 81, team1: "USA", team2: "Bosnia and Herzegovina" },
+  { id: 82, team1: "Belgium", team2: "TBD" },
+  { id: 83, team1: "TBD", team2: "TBD" },
+  { id: 84, team1: "Spain", team2: "TBD" },
+  { id: 85, team1: "Switzerland", team2: "TBD" },
+  { id: 86, team1: "Argentina", team2: "Cabo Verde" },
+  { id: 87, team1: "TBD", team2: "TBD" },
+  { id: 88, team1: "Australia", team2: "Egypt" },
 ];
 
 const MATCHES_PER_PAGE = 4;
@@ -44,9 +44,10 @@ function updateProgress() {
   document.getElementById("step-pct").textContent = pct + "%";
   let label = "";
   if (currentStep < TOTAL_MATCH_PAGES) {
-    const from = currentStep * MATCHES_PER_PAGE + 1;
-    const to = Math.min(from + MATCHES_PER_PAGE - 1, MATCHES.length);
-    label = "Matches " + from + "–" + to + " of " + MATCHES.length;
+    const pageMatches = MATCHES.slice(currentStep * MATCHES_PER_PAGE, (currentStep + 1) * MATCHES_PER_PAGE);
+    const from = pageMatches[0].id;
+    const to = pageMatches[pageMatches.length - 1].id;
+    label = "Matches " + from + "–" + to + " of 88";
   } else {
     label = "Review & submit";
   }

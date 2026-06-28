@@ -371,7 +371,8 @@ function updateUserBar() {
       info.innerHTML = submitterName + " (" + submitterRoll + ")" + groupLink;
       bar.style.display = "flex";
       
-      const hasSubmitted = localStorage.getItem("has_submitted_r32") === "true";
+      const isTest = new URLSearchParams(window.location.search).get("test") === "true";
+      const hasSubmitted = !isTest && localStorage.getItem("has_submitted_r32") === "true";
       if (submitBar) {
         submitBar.style.display = hasSubmitted ? "none" : "block";
       }

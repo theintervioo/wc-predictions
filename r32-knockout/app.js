@@ -154,6 +154,13 @@ function renderTree() {
   const savedScrollLeft = wrapper ? wrapper.scrollLeft : 0;
   const savedScrollY = window.scrollY;
 
+  // Lock the height of the main container to prevent vertical scroll reset during DOM replacement
+  const mainEl = document.getElementById("main");
+  const currentHeight = mainEl ? mainEl.offsetHeight : 0;
+  if (mainEl && currentHeight > 0) {
+    mainEl.style.minHeight = currentHeight + "px";
+  }
+
   let html = '<div class="tree-scroll-helper">' +
     '<svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>' +
     'Swipe left/right or use touch to navigate the full bracket tree' +
@@ -208,7 +215,9 @@ function renderTree() {
   
   html += '</div></div>';
   
-  document.getElementById("main").innerHTML = html;
+  if (mainEl) {
+    mainEl.innerHTML = html;
+  }
   
   // Use setTimeout to allow mobile browsers to finish layout and rendering before restoring scroll
   setTimeout(function() {
@@ -217,6 +226,11 @@ function renderTree() {
       newWrapper.scrollLeft = savedScrollLeft;
     }
     window.scrollTo(window.scrollX, savedScrollY);
+    
+    // Unlock the height container
+    if (mainEl) {
+      mainEl.style.minHeight = "";
+    }
   }, 0);
   
   updateSubmitBar();

@@ -150,17 +150,6 @@ function renderStep() {
 }
 
 function renderTree() {
-  const wrapper = document.querySelector(".bracket-tree-wrapper");
-  const savedScrollLeft = wrapper ? wrapper.scrollLeft : 0;
-  const savedScrollY = window.scrollY;
-
-  // Lock the height of the main container to prevent vertical scroll reset during DOM replacement
-  const mainEl = document.getElementById("main");
-  const currentHeight = mainEl ? mainEl.offsetHeight : 0;
-  if (mainEl && currentHeight > 0) {
-    mainEl.style.minHeight = currentHeight + "px";
-  }
-
   let html = '<div class="tree-scroll-helper">' +
     '<svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>' +
     'Swipe left/right or use touch to navigate the full bracket tree' +
@@ -173,40 +162,22 @@ function renderTree() {
     html += '<div class="column-header">' + col.title + '</div>';
     
     col.matches.forEach(function(matchId) {
-      const teams = getMatchTeams(matchId);
-      const team1 = teams.team1;
-      const team2 = teams.team2;
-      const picked = matchPicks["Match " + matchId] || "";
-      
-      const t1Placeholder = isPlaceholder(team1);
-      const t2Placeholder = isPlaceholder(team2);
-      
-      html += '<div class="tree-match-card ' + (picked ? 'complete' : '') + '" id="card-match-' + matchId + '">' +
+      html += '<div class="tree-match-card" id="card-match-' + matchId + '">' +
         '<div class="tree-match-header">' +
           '<span>Match ' + matchId + '</span>' +
         '</div>' +
         '<div class="tree-match-teams">' +
-          '<button class="tree-team-btn ' + (picked === team1 ? 'selected' : '') + (picked && picked !== team1 ? 'dimmed' : '') + '" ' +
-            (t1Placeholder ? 'disabled' : 'onclick="pickWinner(' + matchId + ',\'' + team1.replace(/'/g, "\\'") + '\')"') + '>' +
-            '<span>' + team1 + '</span>' +
-            (picked === team1 ? '<span class="pick-check">✓</span>' : '') +
-          '</button>' +
-          '<button class="tree-team-btn ' + (picked === team2 ? 'selected' : '') + (picked && picked !== team2 ? 'dimmed' : '') + '" ' +
-            (t2Placeholder ? 'disabled' : 'onclick="pickWinner(' + matchId + ',\'' + team2.replace(/'/g, "\\'") + '\')"') + '>' +
-            '<span>' + team2 + '</span>' +
-            (picked === team2 ? '<span class="pick-check">✓</span>' : '') +
-          '</button>' +
+          '<button class="tree-team-btn"></button>' +
+          '<button class="tree-team-btn"></button>' +
         '</div>' +
       '</div>';
     });
     
     if (col.isFinalColumn) {
-      const champion = getMatchWinner(104);
-      const hasChampion = !!matchPicks["Match 104"];
-      html += '<div class="champion-card ' + (hasChampion ? 'has-champ' : '') + '" id="champion-card">' +
+      html += '<div class="champion-card" id="champion-card">' +
         '<div class="champion-crown">🏆</div>' +
         '<div class="champion-title">WORLD CUP CHAMPION</div>' +
-        '<div class="champion-name" id="champion-name">' + (hasChampion ? champion : 'TBD') + '</div>' +
+        '<div class="champion-name" id="champion-name">TBD</div>' +
       '</div>';
     }
     
@@ -215,28 +186,84 @@ function renderTree() {
   
   html += '</div></div>';
   
-  if (mainEl) {
-    mainEl.innerHTML = html;
-  }
+  document.getElementById("main").innerHTML = html;
   
-  // Use setTimeout to allow mobile browsers to finish layout and rendering before restoring scroll
-  setTimeout(function() {
-    const newWrapper = document.querySelector(".bracket-tree-wrapper");
-    if (newWrapper) {
-      newWrapper.scrollLeft = savedScrollLeft;
-    }
-    window.scrollTo(window.scrollX, savedScrollY);
+  // Populate the names and states in-place for the first time
+  updateTreeState();
+}
+
+function updateTreeState() {
+  TREE_COLUMNS.forEach(function(col) {
+    col.matches.forEach(function(matchId) {
+      const card = document.getElementById("card-match-" + matchId);
+      if (!card) return;
+      
+      const teams = getMatchTeams(matchId);
+      const team1 = teams.team1;
+      const team2 = teams.team2;
+      const picked = matchPicks["Match " + matchId] || "";
+      
+      if (picked) {
+        card.classList.add("complete");
+      } else {
+        card.classList.remove("complete");
+      }
+      
+      const t1Placeholder = isPlaceholder(team1);
+      const t2Placeholder = isPlaceholder(team2);
+      
+      const btns = card.querySelectorAll(".tree-team-btn");
+      if (btns.length >= 2) {
+        const btn1 = btns[0];
+        const btn2 = btns[1];
+        
+        // Update Button 1
+        btn1.disabled = t1Placeholder;
+        btn1.className = "tree-team-btn " + 
+          (picked === team1 ? "selected" : "") + 
+          (picked && picked !== team1 ? " dimmed" : "");
+        btn1.innerHTML = '<span>' + team1 + '</span>' + 
+          (picked === team1 ? '<span class="pick-check">✓</span>' : '');
+        btn1.onclick = function() { pickWinner(matchId, team1); };
+        
+        // Update Button 2
+        btn2.disabled = t2Placeholder;
+        btn2.className = "tree-team-btn " + 
+          (picked === team2 ? "selected" : "") + 
+          (picked && picked !== team2 ? " dimmed" : "");
+        btn2.innerHTML = '<span>' + team2 + '</span>' + 
+          (picked === team2 ? '<span class="pick-check">✓</span>' : '');
+        btn2.onclick = function() { pickWinner(matchId, team2); };
+      }
+    });
     
-    // Unlock the height container
-    if (mainEl) {
-      mainEl.style.minHeight = "";
+    if (col.isFinalColumn) {
+      const champion = getMatchWinner(104);
+      const hasChampion = !!matchPicks["Match 104"];
+      const champCard = document.getElementById("champion-card");
+      const champNameEl = document.getElementById("champion-name");
+      
+      if (champCard && champNameEl) {
+        if (hasChampion) {
+          champCard.classList.add("has-champ");
+          champNameEl.textContent = champion;
+        } else {
+          champCard.classList.remove("has-champ");
+          champNameEl.textContent = "TBD";
+        }
+      }
     }
-  }, 0);
+  });
   
   updateSubmitBar();
 }
 
 function pickWinner(matchId, team) {
+  // Blur any active element (like the clicked button) to prevent focus loss scrolling on mobile devices
+  if (document.activeElement) {
+    document.activeElement.blur();
+  }
+
   const key = "Match " + matchId;
   if (matchPicks[key] === team) {
     delete matchPicks[key];
@@ -245,7 +272,7 @@ function pickWinner(matchId, team) {
   }
   
   propagateBracketChange(matchId);
-  renderTree();
+  updateTreeState();
 }
 
 function updateSubmitBar() {

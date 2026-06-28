@@ -210,11 +210,14 @@ function renderTree() {
   
   document.getElementById("main").innerHTML = html;
   
-  const newWrapper = document.querySelector(".bracket-tree-wrapper");
-  if (newWrapper) {
-    newWrapper.scrollLeft = savedScrollLeft;
-  }
-  window.scrollTo(window.scrollX, savedScrollY);
+  // Use setTimeout to allow mobile browsers to finish layout and rendering before restoring scroll
+  setTimeout(function() {
+    const newWrapper = document.querySelector(".bracket-tree-wrapper");
+    if (newWrapper) {
+      newWrapper.scrollLeft = savedScrollLeft;
+    }
+    window.scrollTo(window.scrollX, savedScrollY);
+  }, 0);
   
   updateSubmitBar();
 }

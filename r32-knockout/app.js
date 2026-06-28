@@ -138,12 +138,18 @@ function propagateBracketChange(matchId) {
 
 // ── BRACKET TREE COLUMNS DEFINITION ──
 const TREE_COLUMNS = [
-  { title: "Round of 32", matches: [74, 77, 73, 75, 76, 78, 79, 80, 83, 84, 81, 82, 86, 88, 85, 87] },
-  { title: "Round of 16", matches: [89, 90, 91, 92, 93, 94, 95, 96] },
-  { title: "Quarter-finals", matches: [97, 98, 99, 100] },
-  { title: "Semi-finals", matches: [101, 102] },
-  { title: "Finals", matches: [104, 103], isFinalColumn: true }
+  { title: "Round of 32", matches: [74, 77, 73, 75, 83, 84, 81, 82], side: "left" },
+  { title: "Round of 16", matches: [89, 90, 93, 94], side: "left" },
+  { title: "Quarter-finals", matches: [97, 98], side: "left" },
+  { title: "Semi-finals", matches: [101], side: "left" },
+  { title: "Finals", matches: [104, 103], isCenterColumn: true },
+  { title: "Semi-finals", matches: [102], side: "right" },
+  { title: "Quarter-finals", matches: [99, 100], side: "right" },
+  { title: "Round of 16", matches: [91, 92, 95, 96], side: "right" },
+  { title: "Round of 32", matches: [76, 78, 79, 80, 86, 88, 85, 87], side: "right" }
 ];
+
+const LEFT_MATCHES = [74, 77, 73, 75, 83, 84, 81, 82, 89, 90, 93, 94, 97, 98, 101];
 
 // Bracket Round connection links definition
 const CONNECTIONS = {
@@ -184,10 +190,18 @@ function drawConnectors() {
     const rectSource = cardSource.getBoundingClientRect();
     const rectTarget = cardTarget.getBoundingClientRect();
     
-    const xSource = rectSource.right - rectTree.left;
-    const ySource = rectSource.top + rectSource.height / 2 - rectTree.top;
+    const isLeftSource = LEFT_MATCHES.indexOf(Number(sourceId)) !== -1;
     
-    const xTarget = rectTarget.left - rectTree.left;
+    let xSource, xTarget;
+    if (isLeftSource) {
+      xSource = rectSource.right - rectTree.left;
+      xTarget = rectTarget.left - rectTree.left;
+    } else {
+      xSource = rectSource.left - rectTree.left;
+      xTarget = rectTarget.right - rectTree.left;
+    }
+    
+    const ySource = rectSource.top + rectSource.height / 2 - rectTree.top;
     const yTarget = rectTarget.top + rectTarget.height / 2 - rectTree.top;
     
     const xMid = xSource + (xTarget - xSource) * 0.45;
@@ -208,7 +222,7 @@ function drawConnectors() {
     if (isHighlighted) {
       path.setAttribute("stroke", "var(--green)");
       path.setAttribute("stroke-width", "2.5");
-      path.setAttribute("style", "filter: drop-shadow(0 0 5px rgba(0, 201, 122, 0.45)); opacity: 0.95; transition: stroke 0.3s, stroke-width 0.3s;");
+      path.setAttribute("style", "filter: drop-shadow(0 0 5px rgba(0, 201, 122, 0.45)); opacity: 0.85; transition: stroke 0.3s, stroke-width 0.3s;");
     } else {
       path.setAttribute("stroke", "rgba(255, 255, 255, 0.08)");
       path.setAttribute("stroke-width", "1.5");
@@ -236,15 +250,15 @@ function drawConnectors() {
     const rect104 = card104.getBoundingClientRect();
     const rectChamp = champCard.getBoundingClientRect();
     
-    const xSource = rect104.right - rectTree.left;
-    const ySource = rect104.top + rect104.height / 2 - rectTree.top;
+    const xSource = rect104.left + rect104.width / 2 - rectTree.left;
+    const ySource = rect104.top - rectTree.top;
     
-    const xTarget = rectChamp.left - rectTree.left;
-    const yTarget = rectChamp.top + rectChamp.height / 2 - rectTree.top;
+    const xTarget = rectChamp.left + rectChamp.width / 2 - rectTree.left;
+    const yTarget = rectChamp.bottom - rectTree.top;
     
     const hasChampion = !!matchPicks["Match 104"];
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    const d = "M " + xSource + " " + ySource + " H " + xTarget;
+    const d = "M " + xSource + " " + ySource + " V " + yTarget;
     path.setAttribute("d", d);
     path.setAttribute("fill", "none");
     
@@ -280,6 +294,14 @@ function renderTree() {
     html += '<div class="bracket-column">';
     html += '<div class="column-header">' + col.title + '</div>';
     
+    if (col.isCenterColumn) {
+      html += '<div class="champion-card" id="champion-card">' +
+        '<div class="champion-crown">🏆</div>' +
+        '<div class="champion-title">WORLD CUP CHAMPION</div>' +
+        '<div class="champion-name" id="champion-name">TBD</div>' +
+      '</div>';
+    }
+    
     col.matches.forEach(function(matchId) {
       html += '<div class="tree-match-card" id="card-match-' + matchId + '">' +
         '<div class="tree-match-header">' +
@@ -291,14 +313,6 @@ function renderTree() {
         '</div>' +
       '</div>';
     });
-    
-    if (col.isFinalColumn) {
-      html += '<div class="champion-card" id="champion-card">' +
-        '<div class="champion-crown">🏆</div>' +
-        '<div class="champion-title">WORLD CUP CHAMPION</div>' +
-        '<div class="champion-name" id="champion-name">TBD</div>' +
-      '</div>';
-    }
     
     html += '</div>';
   });
@@ -356,7 +370,7 @@ function updateTreeState() {
       }
     });
     
-    if (col.isFinalColumn) {
+    if (col.isCenterColumn) {
       const champion = getMatchWinner(104);
       const hasChampion = !!matchPicks["Match 104"];
       const champCard = document.getElementById("champion-card");

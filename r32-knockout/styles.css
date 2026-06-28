@@ -162,11 +162,11 @@ body{font-family:'Barlow',sans-serif;background:linear-gradient(rgba(8,14,18,0.8
 
 .bracket-tree {
   display: flex;
-  gap: 3.5rem;
-  min-width: 1350px;
-  height: 1200px; /* Gives enough vertical spacing for 16 R32 cards */
+  gap: 2.25rem;
+  min-width: 1720px;
+  height: 720px;
   position: relative;
-  padding: 10px 0;
+  padding: 35px 0 10px;
 }
 
 .bracket-column {
@@ -174,19 +174,19 @@ body{font-family:'Barlow',sans-serif;background:linear-gradient(rgba(8,14,18,0.8
   flex-direction: column;
   justify-content: space-around;
   height: 100%;
-  width: 230px;
+  width: 180px;
   flex-shrink: 0;
   position: relative;
 }
 
 .column-header {
   position: absolute;
-  top: -24px;
+  top: -15px;
   left: 0;
   right: 0;
   text-align: center;
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;

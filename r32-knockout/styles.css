@@ -115,6 +115,12 @@ body{font-family:'Barlow',sans-serif;background:linear-gradient(rgba(8,14,18,0.8
 .login-error{color:var(--red);font-size:13px;min-height:18px;margin-bottom:1.25rem;}
 .google-signin-btn-container{margin-top:1.5rem;display:flex;justify-content:center;}
 
+@media (min-width: 992px) {
+  .matches-grid.grid-2col {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media(max-width:600px){
   .matchup-row{grid-template-columns:1fr auto 1fr;}
   .team-pick{padding:12px 10px;font-size:13px;}

@@ -163,8 +163,8 @@ const CONNECTIONS = {
   96: [85, 87],
   
   97: [89, 90],
-  98: [91, 92],
-  99: [93, 94],
+  98: [93, 94], // Fixed: Left QF connects to Left R16 matches
+  99: [91, 92], // Fixed: Right QF connects to Right R16 matches
   100: [95, 96],
   
   101: [97, 98],
@@ -188,7 +188,15 @@ function drawConnectors() {
     if (!cardSource || !cardTarget) return;
     
     const rectSource = cardSource.getBoundingClientRect();
-    const rectTarget = cardTarget.getBoundingClientRect();
+    
+    // Find the specific team button in the target card to connect to
+    const sources = CONNECTIONS[targetId];
+    const isFirstSource = sources && sources[0] === Number(sourceId);
+    const targetBtns = cardTarget.querySelectorAll(".tree-team-btn");
+    const btnTarget = (isFirstSource && targetBtns.length >= 1) ? targetBtns[0] : targetBtns[1];
+    
+    if (!btnTarget) return;
+    const rectTarget = btnTarget.getBoundingClientRect();
     
     const isLeftSource = LEFT_MATCHES.indexOf(Number(sourceId)) !== -1;
     

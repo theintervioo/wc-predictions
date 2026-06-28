@@ -206,8 +206,6 @@ body{font-family:'Barlow',sans-serif;background:linear-gradient(rgba(8,14,18,0.8
   flex-direction: column;
   gap: 2px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-  position: relative;
-  z-index: 2;
   flex-shrink: 0;
 }
 
@@ -309,8 +307,6 @@ body{font-family:'Barlow',sans-serif;background:linear-gradient(rgba(8,14,18,0.8
   height: 160px;
   align-self: center;
   transition: all 0.3s ease;
-  position: relative;
-  z-index: 2;
 }
 
 .champion-card.has-champ {

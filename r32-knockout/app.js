@@ -371,8 +371,7 @@ function renderTree() {
     'Swipe left/right or use touch to navigate the full bracket tree' +
     '</div>' +
     '<div class="bracket-tree-wrapper">' +
-    '<div class="bracket-tree" style="position:relative;">' +
-    '<svg id="bracket-connectors" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;"></svg>';
+    '<div class="bracket-tree" style="position:relative;">';
   
   TREE_COLUMNS.forEach(function(col) {
     html += '<div class="bracket-column" style="height:1060px;">';
@@ -400,6 +399,9 @@ function renderTree() {
     
     html += '</div>';
   });
+  
+  // SVG connector layer AFTER all columns so it paints on top
+  html += '<svg id="bracket-connectors" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10;"></svg>';
   
   html += '</div></div>';
   

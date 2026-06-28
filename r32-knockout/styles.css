@@ -161,22 +161,24 @@ body{font-family:'Barlow',sans-serif;background:linear-gradient(rgba(8,14,18,0.8
 }
 
 .bracket-tree {
-  display: flex;
-  gap: 2.25rem;
-  min-width: 1720px;
-  height: 700px;
-  position: relative;
-  padding: 30px 0 10px;
+  display: flex !important;
+  gap: 2.25rem !important;
+  min-width: 1720px !important;
+  height: 700px !important;
+  position: relative !important;
+  padding: 30px 0 10px !important;
 }
 
 .bracket-column {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  height: 660px;
-  width: 180px;
-  flex-shrink: 0;
-  position: relative;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-around !important;
+  height: 660px !important;
+  min-height: 660px !important;
+  max-height: 660px !important;
+  width: 180px !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
 }
 
 .column-header {

@@ -296,19 +296,19 @@ function drawConnectors() {
       glowPath.setAttribute("d", d);
       glowPath.setAttribute("fill", "none");
       glowPath.setAttribute("stroke-linecap", "round");
-      glowPath.setAttribute("stroke", "#00ffd0");
-      glowPath.setAttribute("stroke-width", "5");
+      glowPath.setAttribute("stroke", "#00ffcc");
+      glowPath.setAttribute("stroke-width", "8");
       glowPath.setAttribute("filter", "url(#glow-green)");
-      glowPath.setAttribute("opacity", "0.65");
+      glowPath.setAttribute("opacity", "0.8");
       glowPaths.push(glowPath);
       
-      // 2. Core active path (sharp, dashed, on top)
+      // 2. Core active path (sharp, dashed, on top - solid color for Safari compatibility)
       const corePath = document.createElementNS("http://www.w3.org/2000/svg", "path");
       corePath.setAttribute("d", d);
       corePath.setAttribute("fill", "none");
       corePath.setAttribute("stroke-linecap", "round");
-      corePath.setAttribute("stroke", "url(#neon-green)");
-      corePath.setAttribute("stroke-width", "2.5");
+      corePath.setAttribute("stroke", "#00ffcc");
+      corePath.setAttribute("stroke-width", "3");
       corePath.setAttribute("stroke-dasharray", "8,8");
       corePath.setAttribute("class", "connector-active");
       litPaths.push(corePath);
@@ -317,11 +317,11 @@ function drawConnectors() {
       path.setAttribute("d", d);
       path.setAttribute("fill", "none");
       path.setAttribute("stroke-linecap", "round");
-      path.setAttribute("stroke", "rgba(255, 255, 255, 0.06)");
-      path.setAttribute("stroke-width", "1");
+      path.setAttribute("stroke", "rgba(255, 255, 255, 0.12)");
+      path.setAttribute("stroke-width", "1.2");
       if (isSecondary) {
         path.setAttribute("stroke-dasharray", "3,5");
-        path.setAttribute("opacity", "0.4");
+        path.setAttribute("opacity", "0.5");
       }
       dimPaths.push(path);
     }
@@ -371,9 +371,9 @@ function drawConnectors() {
       glowPath.setAttribute("fill", "none");
       glowPath.setAttribute("stroke-linecap", "round");
       glowPath.setAttribute("stroke", "#ffd700");
-      glowPath.setAttribute("stroke-width", "6");
+      glowPath.setAttribute("stroke-width", "9");
       glowPath.setAttribute("filter", "url(#glow-gold)");
-      glowPath.setAttribute("opacity", "0.7");
+      glowPath.setAttribute("opacity", "0.85");
       svg.appendChild(glowPath);
       
       // Champion Core path
@@ -381,8 +381,8 @@ function drawConnectors() {
       corePath.setAttribute("d", d);
       corePath.setAttribute("fill", "none");
       corePath.setAttribute("stroke-linecap", "round");
-      corePath.setAttribute("stroke", "url(#neon-gold)");
-      corePath.setAttribute("stroke-width", "3");
+      corePath.setAttribute("stroke", "#ffe066");
+      corePath.setAttribute("stroke-width", "3.5");
       corePath.setAttribute("stroke-dasharray", "8,8");
       corePath.setAttribute("class", "connector-gold");
       svg.appendChild(corePath);
@@ -391,8 +391,8 @@ function drawConnectors() {
       path.setAttribute("d", d);
       path.setAttribute("fill", "none");
       path.setAttribute("stroke-linecap", "round");
-      path.setAttribute("stroke", "rgba(255, 255, 255, 0.06)");
-      path.setAttribute("stroke-width", "1");
+      path.setAttribute("stroke", "rgba(255, 255, 255, 0.12)");
+      path.setAttribute("stroke-width", "1.2");
       path.setAttribute("stroke-dasharray", "3,5");
       svg.appendChild(path);
     }

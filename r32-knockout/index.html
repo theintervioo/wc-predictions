@@ -93,6 +93,20 @@
   <div class="main" id="main"></div>
 </div>
 
+<!-- STICKY SUBMIT BAR -->
+<div class="submit-bar" id="submit-bar">
+  <div class="submit-bar-content">
+    <div class="progress-info">
+      <span class="progress-text" id="progress-text">0/32 Matches Predicted</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <span id="submit-error" class="submit-bar-error"></span>
+      <button class="btn btn-green" id="submit-btn" onclick="confirmAndSubmit()" disabled>Complete All Picks</button>
+    </div>
+  </div>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>

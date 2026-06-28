@@ -136,107 +136,76 @@ function propagateBracketChange(matchId) {
   });
 }
 
-// ── NAVIGATION & RENDERING ──
-function updateProgress() {
-  const pct = Math.round((currentStep / (STEPS.length - 1)) * 100);
-  document.getElementById("progress-bar").style.width = pct + "%";
-  document.getElementById("step-pct").textContent = pct + "%";
-  document.getElementById("step-label").textContent = STEPS[currentStep].title;
-}
-
-function canAdvance() {
-  const step = STEPS[currentStep];
-  if (step.type === "matches") {
-    let allPicked = true;
-    step.matches.forEach(function(matchId) {
-      if (!matchPicks["Match " + matchId]) allPicked = false;
-    });
-    return allPicked;
-  }
-  return true;
-}
-
-function nextStep() {
-  if (currentStep < STEPS.length - 1) {
-    currentStep++;
-    renderCurrentStep();
-  }
-}
-
-function prevStep() {
-  if (currentStep > 0) {
-    currentStep--;
-    renderCurrentStep();
-  }
-}
-
-function renderCurrentStep() {
-  updateProgress();
-  const step = STEPS[currentStep];
-  if (step.type === "matches") {
-    renderMatchPage(currentStep);
-  } else if (step.type === "review") {
-    renderReviewPage();
-  }
-}
+// ── BRACKET TREE COLUMNS DEFINITION ──
+const TREE_COLUMNS = [
+  { title: "Round of 32", matches: [74, 77, 73, 75, 76, 78, 79, 80, 83, 84, 81, 82, 86, 88, 85, 87] },
+  { title: "Round of 16", matches: [89, 90, 91, 92, 93, 94, 95, 96] },
+  { title: "Quarter-finals", matches: [97, 98, 99, 100] },
+  { title: "Semi-finals", matches: [101, 102] },
+  { title: "Finals", matches: [104, 103], isFinalColumn: true }
+];
 
 function renderStep() {
-  renderCurrentStep();
+  renderTree();
 }
 
-function renderMatchPage(stepIndex) {
-  const step = STEPS[stepIndex];
-  const matchesList = step.matches;
+function renderTree() {
+  let html = '<div class="tree-scroll-helper">' +
+    '<svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>' +
+    'Swipe left/right or use touch to navigate the full bracket tree' +
+    '</div>' +
+    '<div class="bracket-tree-wrapper">' +
+    '<div class="bracket-tree">';
   
-  let gridClass = "matches-grid";
-  if (matchesList.length > 4) {
-    gridClass = "matches-grid grid-2col";
-  }
-  
-  let html = '<div class="' + gridClass + '">';
-  
-  matchesList.forEach(function(matchId) {
-    const teams = getMatchTeams(matchId);
-    const team1 = teams.team1;
-    const team2 = teams.team2;
-    const picked = matchPicks["Match " + matchId] || "";
-    const isMatchComplete = !!picked;
+  TREE_COLUMNS.forEach(function(col) {
+    html += '<div class="bracket-column">';
+    html += '<div class="column-header">' + col.title + '</div>';
     
-    const t1Placeholder = isPlaceholder(team1);
-    const t2Placeholder = isPlaceholder(team2);
+    col.matches.forEach(function(matchId) {
+      const teams = getMatchTeams(matchId);
+      const team1 = teams.team1;
+      const team2 = teams.team2;
+      const picked = matchPicks["Match " + matchId] || "";
+      
+      const t1Placeholder = isPlaceholder(team1);
+      const t2Placeholder = isPlaceholder(team2);
+      
+      html += '<div class="tree-match-card ' + (picked ? 'complete' : '') + '" id="card-match-' + matchId + '">' +
+        '<div class="tree-match-header">' +
+          '<span>Match ' + matchId + '</span>' +
+        '</div>' +
+        '<div class="tree-match-teams">' +
+          '<button class="tree-team-btn ' + (picked === team1 ? 'selected' : '') + (picked && picked !== team1 ? 'dimmed' : '') + '" ' +
+            (t1Placeholder ? 'disabled' : 'onclick="pickWinner(' + matchId + ',\'' + team1.replace(/'/g, "\\'") + '\')"') + '>' +
+            '<span>' + team1 + '</span>' +
+            (picked === team1 ? '<span class="pick-check">✓</span>' : '') +
+          '</button>' +
+          '<button class="tree-team-btn ' + (picked === team2 ? 'selected' : '') + (picked && picked !== team2 ? 'dimmed' : '') + '" ' +
+            (t2Placeholder ? 'disabled' : 'onclick="pickWinner(' + matchId + ',\'' + team2.replace(/'/g, "\\'") + '\')"') + '>' +
+            '<span>' + team2 + '</span>' +
+            (picked === team2 ? '<span class="pick-check">✓</span>' : '') +
+          '</button>' +
+        '</div>' +
+      '</div>';
+    });
     
-    html += '<div class="match-card ' + (isMatchComplete ? 'complete' : '') + '" id="card-match-' + matchId + '">' +
-      '<div class="match-header">' +
-        '<span class="match-label">Match ' + matchId + '</span>' +
-        '<span class="match-done-badge">Selected</span>' +
-      '</div>' +
-      '<div class="matchup-row">' +
-        '<button class="team-pick ' + (picked === team1 ? 'selected' : '') + (picked && picked !== team1 ? ' dimmed' : '') + (t1Placeholder ? ' disabled' : '') + '" ' + 
-          (t1Placeholder ? 'disabled' : 'onclick="pickWinner(' + matchId + ',\'' + team1.replace(/'/g, "\\'") + '\')"') + '>' +
-          '<span class="pick-indicator">' + checkSVG() + '</span>' + team1 +
-        '</button>' +
-        '<div class="vs-divider">VS</div>' +
-        '<button class="team-pick ' + (picked === team2 ? 'selected' : '') + (picked && picked !== team2 ? ' dimmed' : '') + (t2Placeholder ? ' disabled' : '') + '" ' + 
-          (t2Placeholder ? 'disabled' : 'onclick="pickWinner(' + matchId + ',\'' + team2.replace(/'/g, "\\'") + '\')"') + '>' +
-          team2 + '<span class="pick-indicator">' + checkSVG() + '</span>' +
-        '</button>' +
-      '</div>' +
-    '</div>';
+    if (col.isFinalColumn) {
+      const champion = getMatchWinner(104);
+      const hasChampion = !!matchPicks["Match 104"];
+      html += '<div class="champion-card ' + (hasChampion ? 'has-champ' : '') + '" id="champion-card">' +
+        '<div class="champion-crown">🏆</div>' +
+        '<div class="champion-title">WORLD CUP CHAMPION</div>' +
+        '<div class="champion-name" id="champion-name">' + (hasChampion ? champion : 'TBD') + '</div>' +
+      '</div>';
+    }
+    
+    html += '</div>';
   });
   
-  html += '</div>';
-  
-  const pageDone = matchesList.filter(function(mid){ return matchPicks["Match " + mid]; }).length;
-  
-  html += '<div class="nav-row">' +
-    '<div class="count-badge" id="nav-count"><strong>' + pageDone + '</strong>/' + matchesList.length + ' matches picked</div>' +
-    '<div style="display:flex;gap:12px;">' +
-      '<button class="btn" onclick="prevStep()" ' + (currentStep === 0 ? 'disabled' : '') + '>Back</button>' +
-      '<button class="btn btn-green" id="next-btn" onclick="nextStep()" ' + (canAdvance() ? '' : 'disabled') + '>Next</button>' +
-    '</div>' +
-  '</div>';
+  html += '</div></div>';
   
   document.getElementById("main").innerHTML = html;
+  updateSubmitBar();
 }
 
 function pickWinner(matchId, team) {
@@ -248,53 +217,48 @@ function pickWinner(matchId, team) {
   }
   
   propagateBracketChange(matchId);
-  
-  const step = STEPS[currentStep];
-  const matchesList = step.matches;
-  
-  matchesList.forEach(function(mid) {
-    const k = "Match " + mid;
-    const picked = matchPicks[k] || "";
-    const card = document.getElementById("card-match-" + mid);
-    if (!card) return;
-    if (picked) card.classList.add("complete");
-    else card.classList.remove("complete");
-    
-    const teams = getMatchTeams(mid);
-    const btns = card.querySelectorAll(".team-pick");
-    
-    const btn1 = btns[0];
-    btn1.className = "team-pick" + (picked === teams.team1 ? " selected" : "") + (picked && picked !== teams.team1 ? " dimmed" : "") + (isPlaceholder(teams.team1) ? " disabled" : "");
-    btn1.disabled = isPlaceholder(teams.team1);
-    btn1.innerHTML = '<span class="pick-indicator">' + checkSVG() + '</span>' + teams.team1;
-    
-    const btn2 = btns[1];
-    btn2.className = "team-pick" + (picked === teams.team2 ? " selected" : "") + (picked && picked !== teams.team2 ? " dimmed" : "") + (isPlaceholder(teams.team2) ? " disabled" : "");
-    btn2.disabled = isPlaceholder(teams.team2);
-    btn2.innerHTML = teams.team2 + '<span class="pick-indicator">' + checkSVG() + '</span>';
-  });
-  
-  const pageDone = matchesList.filter(function(mid){ return matchPicks["Match " + mid]; }).length;
-  const countEl = document.getElementById("nav-count");
-  if (countEl) countEl.innerHTML = '<strong>' + pageDone + '</strong>/' + matchesList.length + ' matches picked';
-  
-  const nextBtn = document.getElementById("next-btn");
-  if (nextBtn) nextBtn.disabled = !canAdvance();
+  renderTree();
 }
 
-function renderReviewPage() {
-  let html = '<h2 style="margin-bottom:0.5rem;text-align:center;font-family:\'Barlow Condensed\',sans-serif;font-size:2rem;text-transform:uppercase;">Review your bracket predictions</h2>' +
-    '<p style="color:var(--muted);font-size:14px;text-align:center;margin-bottom:2rem;">Please double check all stages of your bracket. Once submitted, your selections are locked.</p>' +
-    renderReadOnlySummary() +
-    '<div id="submit-error" class="error-msg" style="text-align:center;margin:1rem 0;"></div>' +
-    '<div class="nav-row">' +
-      '<div class="count-badge"><strong>Ready</strong> to lock in predictions</div>' +
-      '<div style="display:flex;gap:12px;">' +
-        '<button class="btn" onclick="prevStep()">Back</button>' +
-        '<button class="btn btn-green" id="submit-btn" onclick="submitPredictions()">Submit Predictions 🚀</button>' +
-      '</div>' +
-    '</div>';
-  document.getElementById("main").innerHTML = html;
+function updateSubmitBar() {
+  let totalPicks = 0;
+  for (let matchId = 73; matchId <= 104; matchId++) {
+    if (matchPicks["Match " + matchId]) {
+      totalPicks++;
+    }
+  }
+  
+  const pct = Math.round((totalPicks / 32) * 100);
+  
+  const topBar = document.getElementById("progress-bar");
+  const topPct = document.getElementById("step-pct");
+  const topLabel = document.getElementById("step-label");
+  if (topBar) topBar.style.width = pct + "%";
+  if (topPct) topPct.textContent = pct + "%";
+  if (topLabel) topLabel.textContent = totalPicks + "/32 Matches Predicted";
+  
+  const progressText = document.getElementById("progress-text");
+  const progressFill = document.getElementById("progress-fill");
+  const submitBtn = document.getElementById("submit-btn");
+  
+  if (progressText) progressText.textContent = totalPicks + "/32 Matches Predicted";
+  if (progressFill) progressFill.style.width = pct + "%";
+  
+  if (submitBtn) {
+    if (totalPicks === 32) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit Predictions 🚀";
+    } else {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Complete All Picks";
+    }
+  }
+}
+
+function confirmAndSubmit() {
+  if (confirm("Are you sure you want to submit your tournament bracket predictions? Once submitted, your choices will be locked.")) {
+    submitPredictions();
+  }
 }
 
 function renderReadOnlySummary() {
@@ -306,18 +270,29 @@ function renderReadOnlySummary() {
       '<span class="pill">📧 ' + submitterEmail + '</span>' +
     '</div></div>';
 
-  STEPS.forEach(function(step) {
-    if (step.type !== "matches") return;
+  const groups = [
+    { title: "Round of 32", matches: [74, 77, 73, 75, 76, 78, 79, 80, 83, 84, 81, 82, 86, 88, 85, 87] },
+    { title: "Round of 16", matches: [89, 90, 91, 92, 93, 94, 95, 96] },
+    { title: "Quarter-finals", matches: [97, 98, 99, 100] },
+    { title: "Semi-finals", matches: [101, 102] },
+    { title: "World Cup Finals", matches: [104, 103] }
+  ];
+
+  groups.forEach(function(g) {
     html += '<div class="summary-card" style="text-align:left;max-width:580px;margin:0 auto 1.5rem;">' +
-      '<div class="summary-title">⚔️ ' + step.title + ' Picks</div>';
+      '<div class="summary-title">⚔️ ' + g.title + ' Picks</div>';
     
-    step.matches.forEach(function(matchId) {
+    g.matches.forEach(function(matchId) {
       const key = "Match " + matchId;
       const winner = matchPicks[key] || "—";
       const teams = getMatchTeams(matchId);
       const loser = winner === teams.team1 ? teams.team2 : teams.team1;
       
-      html += '<div class="summary-match"><span class="sm-label">Match ' + matchId + '</span>' +
+      let label = "Match " + matchId;
+      if (matchId === 104) label = "Final";
+      if (matchId === 103) label = "3rd Place Playoff";
+      
+      html += '<div class="summary-match"><span class="sm-label">' + label + '</span>' +
         '<span class="tag">' + winner + ' ✓</span>' +
         '<span class="tag loser">' + loser + '</span></div>';
     });
@@ -331,6 +306,7 @@ function renderReadOnlySummary() {
 function updateUserBar() {
   const bar = document.getElementById("user-bar");
   const info = document.getElementById("user-bar-info");
+  const submitBar = document.getElementById("submit-bar");
   if (bar && info) {
     if (submitterName && submitterRoll) {
       let groupLink = "";
@@ -339,8 +315,16 @@ function updateUserBar() {
       }
       info.innerHTML = submitterName + " (" + submitterRoll + ")" + groupLink;
       bar.style.display = "flex";
+      
+      const hasSubmitted = localStorage.getItem("has_submitted_r32") === "true";
+      if (submitBar) {
+        submitBar.style.display = hasSubmitted ? "none" : "block";
+      }
     } else {
       bar.style.display = "none";
+      if (submitBar) {
+        submitBar.style.display = "none";
+      }
     }
   }
 }
@@ -585,6 +569,8 @@ function showSuccess(name, roll) {
   localStorage.setItem("user_match_picks", JSON.stringify(matchPicks));
   const bar = document.getElementById("user-bar");
   if (bar) bar.style.display = "none";
+  const submitBar = document.getElementById("submit-bar");
+  if (submitBar) submitBar.style.display = "none";
   
   let historyBtn = "";
   if (localStorage.getItem("has_group_history") === "true") {

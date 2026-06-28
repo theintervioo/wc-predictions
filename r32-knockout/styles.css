@@ -150,7 +150,7 @@ body{font-family:'Barlow',sans-serif;background:linear-gradient(rgba(8,14,18,0.8
 .bracket-tree-wrapper {
   width: 100%;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: visible;
   padding: 24px 16px;
   background: rgba(13, 26, 34, 0.45);
   border-radius: var(--radius);

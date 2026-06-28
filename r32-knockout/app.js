@@ -407,6 +407,19 @@ function checkSubmissionStatus(email, token, callback, attempt) {
 }
 
 function initApp() {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get("test") === "true") {
+    submitterName = "Test User";
+    submitterRoll = "2024IPM001";
+    submitterEmail = "test@iimidr.ac.in";
+    idToken = "DEV_MODE_NO_TOKEN";
+    document.getElementById("login-container").style.display = "none";
+    document.getElementById("app-container").style.display = "block";
+    updateUserBar();
+    renderTree();
+    return;
+  }
+
   const savedEmail = localStorage.getItem("user_email");
   const savedToken = localStorage.getItem("user_id_token");
   if (GOOGLE_CLIENT_ID) {

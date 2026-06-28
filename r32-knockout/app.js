@@ -854,6 +854,20 @@ function submitPredictions() {
   const btn = document.getElementById("submit-btn");
   btn.textContent = "Submitting..."; btn.disabled = true;
 
+  const isTest = new URLSearchParams(window.location.search).get("test") === "true";
+  if (isTest) {
+    setTimeout(function() {
+      localStorage.setItem("has_submitted_r32", "true");
+      localStorage.setItem("user_email", email);
+      localStorage.setItem("user_name", name);
+      localStorage.setItem("user_roll", roll);
+      localStorage.setItem("user_id_token", idToken);
+      localStorage.setItem("user_match_picks", JSON.stringify(matchPicks));
+      showSuccess(name, roll);
+    }, 1000);
+    return;
+  }
+
   const params = new URLSearchParams();
   params.append("action", "submit"); params.append("stage", "r32");
   params.append("email", email.toLowerCase()); params.append("id_token", idToken);

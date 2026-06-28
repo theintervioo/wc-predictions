@@ -254,6 +254,13 @@ body{font-family:'Barlow',sans-serif;background:linear-gradient(rgba(8,14,18,0.8
   transition: all 0.15s ease;
 }
 
+.tree-team-btn span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 125px;
+}
+
 .tree-team-btn:last-child {
   border-bottom: none;
 }

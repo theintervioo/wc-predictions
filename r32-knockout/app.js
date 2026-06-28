@@ -299,7 +299,7 @@ function renderTree() {
     '<svg id="bracket-connectors" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;"></svg>';
   
   TREE_COLUMNS.forEach(function(col) {
-    html += '<div class="bracket-column" style="height:660px;">';
+    html += '<div class="bracket-column" style="height:1060px;">';
     html += '<div class="column-header">' + col.title + '</div>';
     
     if (col.isCenterColumn) {

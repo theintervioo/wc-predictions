@@ -161,24 +161,22 @@ body{font-family:'Barlow',sans-serif;background:linear-gradient(rgba(8,14,18,0.8
 }
 
 .bracket-tree {
-  display: flex !important;
-  gap: 2.25rem !important;
-  min-width: 1720px !important;
-  height: 700px !important;
-  position: relative !important;
-  padding: 30px 0 10px !important;
+  display: flex;
+  gap: 2rem;
+  min-width: 1720px;
+  height: 1100px;
+  position: relative;
+  padding: 30px 0 10px;
 }
 
 .bracket-column {
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: space-around !important;
-  height: 660px !important;
-  min-height: 660px !important;
-  max-height: 660px !important;
-  width: 180px !important;
-  flex-shrink: 0 !important;
-  position: relative !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  height: 1060px;
+  width: 175px;
+  flex-shrink: 0;
+  position: relative;
 }
 
 .column-header {
@@ -201,15 +199,16 @@ body{font-family:'Barlow',sans-serif;background:linear-gradient(rgba(8,14,18,0.8
   background: var(--card);
   border: 1.5px solid var(--border);
   border-radius: 8px;
-  padding: 8px;
+  padding: 4px 6px;
   width: 100%;
   transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.3);
   position: relative;
   z-index: 2;
+  flex-shrink: 0;
 }
 
 .tree-match-card.complete {
@@ -219,34 +218,34 @@ body{font-family:'Barlow',sans-serif;background:linear-gradient(rgba(8,14,18,0.8
 
 .tree-match-header {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--muted);
-  margin-bottom: 2px;
+  margin-bottom: 1px;
   display: flex;
   justify-content: space-between;
-  padding: 0 4px;
+  padding: 0 2px;
 }
 
 .tree-match-teams {
   display: flex;
   flex-direction: column;
-  border-radius: 6px;
+  border-radius: 5px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .tree-team-btn {
   width: 100%;
-  padding: 11px 12px;
+  padding: 7px 8px;
   background: rgba(255, 255, 255, 0.015);
   border: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   color: var(--text);
   font-family: 'Barlow', sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   text-align: left;
@@ -260,7 +259,7 @@ body{font-family:'Barlow',sans-serif;background:linear-gradient(rgba(8,14,18,0.8
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 125px;
+  max-width: 120px;
 }
 
 .tree-team-btn:last-child {

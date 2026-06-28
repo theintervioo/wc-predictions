@@ -182,7 +182,66 @@ function drawConnectors() {
   svg.innerHTML = "";
   const rectTree = treeContainer.getBoundingClientRect();
   
-  function drawLine(sourceId, targetId, isSecondary) {
+  // Inject SVG defs for gradients and animations (only once)
+  const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+  
+  // Green neon gradient for highlighted paths
+  const greenGrad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+  greenGrad.setAttribute("id", "neon-green");
+  greenGrad.setAttribute("gradientUnits", "userSpaceOnUse");
+  var s1 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+  s1.setAttribute("offset", "0%"); s1.setAttribute("stop-color", "#00c97a");
+  var s2 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+  s2.setAttribute("offset", "50%"); s2.setAttribute("stop-color", "#00e5ff");
+  var s3 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+  s3.setAttribute("offset", "100%"); s3.setAttribute("stop-color", "#00c97a");
+  greenGrad.appendChild(s1); greenGrad.appendChild(s2); greenGrad.appendChild(s3);
+  defs.appendChild(greenGrad);
+  
+  // Gold gradient for champion path
+  const goldGrad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+  goldGrad.setAttribute("id", "neon-gold");
+  goldGrad.setAttribute("gradientUnits", "userSpaceOnUse");
+  var g1 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+  g1.setAttribute("offset", "0%"); g1.setAttribute("stop-color", "#f5c842");
+  var g2 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+  g2.setAttribute("offset", "50%"); g2.setAttribute("stop-color", "#ffd700");
+  var g3 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+  g3.setAttribute("offset", "100%"); g3.setAttribute("stop-color", "#f5c842");
+  goldGrad.appendChild(g1); goldGrad.appendChild(g2); goldGrad.appendChild(g3);
+  defs.appendChild(goldGrad);
+  
+  // Glow filters
+  var glowGreen = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+  glowGreen.setAttribute("id", "glow-green"); glowGreen.setAttribute("x", "-20%"); glowGreen.setAttribute("y", "-20%"); glowGreen.setAttribute("width", "140%"); glowGreen.setAttribute("height", "140%");
+  var blur1 = document.createElementNS("http://www.w3.org/2000/svg", "feGaussianBlur"); blur1.setAttribute("stdDeviation", "3"); blur1.setAttribute("result", "blur");
+  var merge1 = document.createElementNS("http://www.w3.org/2000/svg", "feMerge");
+  var mn1 = document.createElementNS("http://www.w3.org/2000/svg", "feMergeNode"); mn1.setAttribute("in", "blur");
+  var mn2 = document.createElementNS("http://www.w3.org/2000/svg", "feMergeNode"); mn2.setAttribute("in", "SourceGraphic");
+  merge1.appendChild(mn1); merge1.appendChild(mn2); glowGreen.appendChild(blur1); glowGreen.appendChild(merge1);
+  defs.appendChild(glowGreen);
+  
+  var glowGold = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+  glowGold.setAttribute("id", "glow-gold"); glowGold.setAttribute("x", "-20%"); glowGold.setAttribute("y", "-20%"); glowGold.setAttribute("width", "140%"); glowGold.setAttribute("height", "140%");
+  var blur2 = document.createElementNS("http://www.w3.org/2000/svg", "feGaussianBlur"); blur2.setAttribute("stdDeviation", "4"); blur2.setAttribute("result", "blur");
+  var merge2 = document.createElementNS("http://www.w3.org/2000/svg", "feMerge");
+  var mn3 = document.createElementNS("http://www.w3.org/2000/svg", "feMergeNode"); mn3.setAttribute("in", "blur");
+  var mn4 = document.createElementNS("http://www.w3.org/2000/svg", "feMergeNode"); mn4.setAttribute("in", "SourceGraphic");
+  merge2.appendChild(mn3); merge2.appendChild(mn4); glowGold.appendChild(blur2); glowGold.appendChild(merge2);
+  defs.appendChild(glowGold);
+  
+  // Animated flow keyframes via <style>
+  var styleEl = document.createElementNS("http://www.w3.org/2000/svg", "style");
+  styleEl.textContent = "@keyframes flowDash{0%{stroke-dashoffset:16;}100%{stroke-dashoffset:0;}} @keyframes pulsePath{0%,100%{opacity:0.8;}50%{opacity:1;}} .connector-active{animation:flowDash 0.8s linear infinite, pulsePath 2s ease-in-out infinite;} .connector-gold{animation:flowDash 1s linear infinite, pulsePath 2.5s ease-in-out infinite;}";
+  defs.appendChild(styleEl);
+  
+  svg.appendChild(defs);
+  
+  // Collect paths in two layers: dim first, highlighted on top
+  var dimPaths = [];
+  var litPaths = [];
+  
+  function buildLine(sourceId, targetId, isSecondary) {
     const cardSource = document.getElementById("card-match-" + sourceId);
     const cardTarget = document.getElementById("card-match-" + targetId);
     if (!cardSource || !cardTarget) return;
@@ -212,44 +271,53 @@ function drawConnectors() {
     const ySource = rectSource.top + rectSource.height / 2 - rectTree.top;
     const yTarget = rectTarget.top + rectTarget.height / 2 - rectTree.top;
     
-    const xMid = xSource + (xTarget - xSource) * 0.45;
+    // Smooth cubic bézier curve instead of harsh right-angle
+    const dx = xTarget - xSource;
+    const cpOffset = Math.abs(dx) * 0.5;
+    const d = "M " + xSource + " " + ySource + 
+              " C " + (xSource + (isLeftSource ? cpOffset : -cpOffset)) + " " + ySource + 
+              " " + (xTarget + (isLeftSource ? -cpOffset : cpOffset)) + " " + yTarget + 
+              " " + xTarget + " " + yTarget;
     
     const sourcePick = matchPicks["Match " + sourceId];
     const targetTeams = getMatchTeams(targetId);
     const isHighlighted = sourcePick && (sourcePick === targetTeams.team1 || sourcePick === targetTeams.team2);
     
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    const d = "M " + xSource + " " + ySource + 
-              " H " + xMid + 
-              " V " + yTarget + 
-              " H " + xTarget;
-              
     path.setAttribute("d", d);
     path.setAttribute("fill", "none");
+    path.setAttribute("stroke-linecap", "round");
     
     if (isHighlighted) {
-      path.setAttribute("stroke", "var(--green)");
-      path.setAttribute("stroke-width", "2.5");
-      path.setAttribute("style", "filter: drop-shadow(0 0 5px rgba(0, 201, 122, 0.45)); opacity: 0.85; transition: stroke 0.3s, stroke-width 0.3s;");
+      path.setAttribute("stroke", "url(#neon-green)");
+      path.setAttribute("stroke-width", "2");
+      path.setAttribute("filter", "url(#glow-green)");
+      path.setAttribute("stroke-dasharray", "8,8");
+      path.setAttribute("class", "connector-active");
+      litPaths.push(path);
     } else {
-      path.setAttribute("stroke", "rgba(255, 255, 255, 0.08)");
-      path.setAttribute("stroke-width", "1.5");
+      path.setAttribute("stroke", "rgba(255, 255, 255, 0.06)");
+      path.setAttribute("stroke-width", "1");
       if (isSecondary) {
-        path.setAttribute("stroke-dasharray", "4,4");
+        path.setAttribute("stroke-dasharray", "3,5");
+        path.setAttribute("opacity", "0.4");
       }
-      path.setAttribute("style", "transition: stroke 0.3s, stroke-width 0.3s;");
+      dimPaths.push(path);
     }
-    
-    svg.appendChild(path);
   }
   
   for (const targetId in CONNECTIONS) {
     const sources = CONNECTIONS[targetId];
     const is3rdPlace = targetId == 103;
     sources.forEach(function(sourceId) {
-      drawLine(sourceId, targetId, is3rdPlace);
+      buildLine(sourceId, targetId, is3rdPlace);
     });
   }
+  
+  // Render dim paths first (background layer)
+  dimPaths.forEach(function(p) { svg.appendChild(p); });
+  // Render highlighted paths on top (foreground layer)
+  litPaths.forEach(function(p) { svg.appendChild(p); });
   
   // Connect Final (104) to Champion Card
   const card104 = document.getElementById("card-match-104");
@@ -264,20 +332,28 @@ function drawConnectors() {
     const xTarget = rectChamp.left + rectChamp.width / 2 - rectTree.left;
     const yTarget = rectChamp.bottom - rectTree.top;
     
+    const dy = yTarget - ySource;
     const hasChampion = !!matchPicks["Match 104"];
+    
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    const d = "M " + xSource + " " + ySource + " V " + yTarget;
+    const d = "M " + xSource + " " + ySource + 
+              " C " + xSource + " " + (ySource + dy * 0.4) + 
+              " " + xTarget + " " + (yTarget - dy * 0.4) + 
+              " " + xTarget + " " + yTarget;
     path.setAttribute("d", d);
     path.setAttribute("fill", "none");
+    path.setAttribute("stroke-linecap", "round");
     
     if (hasChampion) {
-      path.setAttribute("stroke", "var(--gold)");
+      path.setAttribute("stroke", "url(#neon-gold)");
       path.setAttribute("stroke-width", "2.5");
-      path.setAttribute("style", "filter: drop-shadow(0 0 6px rgba(245, 200, 66, 0.55)); opacity: 0.95;");
+      path.setAttribute("filter", "url(#glow-gold)");
+      path.setAttribute("stroke-dasharray", "8,8");
+      path.setAttribute("class", "connector-gold");
     } else {
-      path.setAttribute("stroke", "rgba(255, 255, 255, 0.08)");
-      path.setAttribute("stroke-width", "1.5");
-      path.setAttribute("stroke-dasharray", "3,3");
+      path.setAttribute("stroke", "rgba(255, 255, 255, 0.06)");
+      path.setAttribute("stroke-width", "1");
+      path.setAttribute("stroke-dasharray", "3,5");
     }
     svg.appendChild(path);
   }

@@ -145,6 +145,124 @@ const TREE_COLUMNS = [
   { title: "Finals", matches: [104, 103], isFinalColumn: true }
 ];
 
+// Bracket Round connection links definition
+const CONNECTIONS = {
+  89: [74, 77],
+  90: [73, 75],
+  91: [76, 78],
+  92: [79, 80],
+  93: [83, 84],
+  94: [81, 82],
+  95: [86, 88],
+  96: [85, 87],
+  
+  97: [89, 90],
+  98: [91, 92],
+  99: [93, 94],
+  100: [95, 96],
+  
+  101: [97, 98],
+  102: [99, 100],
+  
+  104: [101, 102],
+  103: [101, 102]
+};
+
+function drawConnectors() {
+  const svg = document.getElementById("bracket-connectors");
+  const treeContainer = document.querySelector(".bracket-tree");
+  if (!svg || !treeContainer) return;
+  
+  svg.innerHTML = "";
+  const rectTree = treeContainer.getBoundingClientRect();
+  
+  function drawLine(sourceId, targetId, isSecondary) {
+    const cardSource = document.getElementById("card-match-" + sourceId);
+    const cardTarget = document.getElementById("card-match-" + targetId);
+    if (!cardSource || !cardTarget) return;
+    
+    const rectSource = cardSource.getBoundingClientRect();
+    const rectTarget = cardTarget.getBoundingClientRect();
+    
+    const xSource = rectSource.right - rectTree.left;
+    const ySource = rectSource.top + rectSource.height / 2 - rectTree.top;
+    
+    const xTarget = rectTarget.left - rectTree.left;
+    const yTarget = rectTarget.top + rectTarget.height / 2 - rectTree.top;
+    
+    const xMid = xSource + (xTarget - xSource) * 0.45;
+    
+    const sourcePick = matchPicks["Match " + sourceId];
+    const targetTeams = getMatchTeams(targetId);
+    const isHighlighted = sourcePick && (sourcePick === targetTeams.team1 || sourcePick === targetTeams.team2);
+    
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    const d = "M " + xSource + " " + ySource + 
+              " H " + xMid + 
+              " V " + yTarget + 
+              " H " + xTarget;
+              
+    path.setAttribute("d", d);
+    path.setAttribute("fill", "none");
+    
+    if (isHighlighted) {
+      path.setAttribute("stroke", "var(--green)");
+      path.setAttribute("stroke-width", "2.5");
+      path.setAttribute("style", "filter: drop-shadow(0 0 5px rgba(0, 201, 122, 0.45)); opacity: 0.95; transition: stroke 0.3s, stroke-width 0.3s;");
+    } else {
+      path.setAttribute("stroke", "rgba(255, 255, 255, 0.08)");
+      path.setAttribute("stroke-width", "1.5");
+      if (isSecondary) {
+        path.setAttribute("stroke-dasharray", "4,4");
+      }
+      path.setAttribute("style", "transition: stroke 0.3s, stroke-width 0.3s;");
+    }
+    
+    svg.appendChild(path);
+  }
+  
+  for (const targetId in CONNECTIONS) {
+    const sources = CONNECTIONS[targetId];
+    const is3rdPlace = targetId == 103;
+    sources.forEach(function(sourceId) {
+      drawLine(sourceId, targetId, is3rdPlace);
+    });
+  }
+  
+  // Connect Final (104) to Champion Card
+  const card104 = document.getElementById("card-match-104");
+  const champCard = document.getElementById("champion-card");
+  if (card104 && champCard) {
+    const rect104 = card104.getBoundingClientRect();
+    const rectChamp = champCard.getBoundingClientRect();
+    
+    const xSource = rect104.right - rectTree.left;
+    const ySource = rect104.top + rect104.height / 2 - rectTree.top;
+    
+    const xTarget = rectChamp.left - rectTree.left;
+    const yTarget = rectChamp.top + rectChamp.height / 2 - rectTree.top;
+    
+    const hasChampion = !!matchPicks["Match 104"];
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    const d = "M " + xSource + " " + ySource + " H " + xTarget;
+    path.setAttribute("d", d);
+    path.setAttribute("fill", "none");
+    
+    if (hasChampion) {
+      path.setAttribute("stroke", "var(--gold)");
+      path.setAttribute("stroke-width", "2.5");
+      path.setAttribute("style", "filter: drop-shadow(0 0 6px rgba(245, 200, 66, 0.55)); opacity: 0.95;");
+    } else {
+      path.setAttribute("stroke", "rgba(255, 255, 255, 0.08)");
+      path.setAttribute("stroke-width", "1.5");
+      path.setAttribute("stroke-dasharray", "3,3");
+    }
+    svg.appendChild(path);
+  }
+}
+
+window.addEventListener("resize", drawConnectors);
+
 function renderStep() {
   renderTree();
 }
@@ -155,7 +273,8 @@ function renderTree() {
     'Swipe left/right or use touch to navigate the full bracket tree' +
     '</div>' +
     '<div class="bracket-tree-wrapper">' +
-    '<div class="bracket-tree">';
+    '<div class="bracket-tree" style="position:relative;">' +
+    '<svg id="bracket-connectors" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;"></svg>';
   
   TREE_COLUMNS.forEach(function(col) {
     html += '<div class="bracket-column">';
@@ -256,6 +375,9 @@ function updateTreeState() {
   });
   
   updateSubmitBar();
+  
+  // Draw or redraw dynamic connecting lines
+  setTimeout(drawConnectors, 20);
 }
 
 function pickWinner(matchId, team) {

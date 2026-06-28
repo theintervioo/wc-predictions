@@ -150,6 +150,10 @@ function renderStep() {
 }
 
 function renderTree() {
+  const wrapper = document.querySelector(".bracket-tree-wrapper");
+  const savedScrollLeft = wrapper ? wrapper.scrollLeft : 0;
+  const savedScrollY = window.scrollY;
+
   let html = '<div class="tree-scroll-helper">' +
     '<svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>' +
     'Swipe left/right or use touch to navigate the full bracket tree' +
@@ -205,6 +209,13 @@ function renderTree() {
   html += '</div></div>';
   
   document.getElementById("main").innerHTML = html;
+  
+  const newWrapper = document.querySelector(".bracket-tree-wrapper");
+  if (newWrapper) {
+    newWrapper.scrollLeft = savedScrollLeft;
+  }
+  window.scrollTo(window.scrollX, savedScrollY);
+  
   updateSubmitBar();
 }
 
